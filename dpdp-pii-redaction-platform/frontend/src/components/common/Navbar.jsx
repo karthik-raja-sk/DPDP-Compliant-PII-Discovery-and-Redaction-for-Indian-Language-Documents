@@ -1,31 +1,56 @@
 import React from 'react';
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, ShieldCheck, Menu } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-const Navbar = () => {
+const Navbar = ({ onMenuClick }) => {
+  const { user } = useAuth();
+
   return (
-    <nav className="h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-8 sticky top-0 z-50">
-      <div className="flex items-center flex-1 max-w-xl">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+    <nav className="h-20 glass-panel border-b border-white/5 flex items-center justify-between px-6 md:px-10 sticky top-0 z-50">
+      <div className="flex items-center gap-4 flex-1 max-w-2xl">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:text-white"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        
+        <div className="relative w-full group hidden md:block">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
           <input
             type="text"
-            placeholder="Search documents, entities, logs..."
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all font-light"
+            placeholder="Search for documents, PII entities, or audit logs..."
+            className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/30 transition-all font-light"
           />
         </div>
       </div>
-      <div className="flex items-center gap-6">
-        <button className="relative text-slate-400 hover:text-white transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary-500 rounded-full"></span>
-        </button>
-        <div className="flex items-center gap-3 border-l border-slate-800 pl-6 cursor-pointer hover:opacity-80 transition-opacity">
-          <div className="text-right">
-            <p className="text-sm font-medium text-slate-200 leading-none">Admin User</p>
-            <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">Enterprise Plan</p>
+      
+      <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2">
+          <button className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:text-primary-400 hover:border-primary-500/30 transition-all">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-500 rounded-full border-2 border-[#050914] animate-pulse"></span>
+          </button>
+          <button className="hidden sm:flex relative w-10 h-10 items-center justify-center rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:text-primary-400 hover:border-primary-500/30 transition-all">
+            <ShieldCheck className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="h-8 w-px bg-white/5 hidden sm:block"></div>
+
+        <div className="flex items-center gap-4 group cursor-pointer">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-slate-200 leading-none group-hover:text-primary-400 transition-colors">
+              {user?.full_name || 'Administrator'}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.2em] font-bold">
+              Premium Tier
+            </p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-            AU
+          <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl premium-gradient p-[1px] shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-full h-full rounded-[15px] bg-[#050914] flex items-center justify-center text-primary-400 font-bold text-sm">
+              {user?.full_name?.split(' ').map(n => n[0]).join('') || 'AD'}
+            </div>
           </div>
         </div>
       </div>
