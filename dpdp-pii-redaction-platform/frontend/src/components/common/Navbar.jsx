@@ -1,9 +1,10 @@
 import React from 'react';
-import { Bell, Search, User, ShieldCheck, Menu } from 'lucide-react';
+import { Bell, Search, User, ShieldCheck, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = ({ onMenuClick }) => {
   const { user } = useAuth();
+  const [search, setSearch] = React.useState('');
 
   return (
     <nav className="h-20 glass-panel border-b border-white/5 flex items-center justify-between px-6 md:px-10 sticky top-0 z-50">
@@ -19,9 +20,19 @@ const Navbar = ({ onMenuClick }) => {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search for documents, PII entities, or audit logs..."
-            className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/30 transition-all font-light"
+            className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-12 pr-10 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/30 transition-all font-light"
           />
+          {search && (
+            <button 
+              onClick={() => setSearch('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
       

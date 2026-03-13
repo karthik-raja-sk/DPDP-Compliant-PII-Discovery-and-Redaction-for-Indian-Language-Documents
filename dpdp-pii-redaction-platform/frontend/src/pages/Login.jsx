@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { ShieldCheck, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -16,14 +17,16 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      // The context login might expect different keys, adjusting based on target code
       await login({
         username: formData.email,
         password: formData.password
       });
+      toast.success('Access Granted. Welcome back!');
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
+      const msg = err.response?.data?.detail || 'Invalid credentials. Please try again.';
+      toast.error(msg);
       if (err.response?.status === 422) {
         // Handle FastAPI validation error structure
         const details = err.response.data.detail;

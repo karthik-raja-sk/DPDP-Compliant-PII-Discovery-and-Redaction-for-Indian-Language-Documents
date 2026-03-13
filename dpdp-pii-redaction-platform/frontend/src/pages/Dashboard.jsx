@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   AreaChart, 
   Area, 
@@ -56,6 +57,12 @@ const recentActivity = [
 ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
+  const memoizedTrendData = useMemo(() => trendData, []);
+  const memoizedPieData = useMemo(() => pieData, []);
+  const memoizedStats = useMemo(() => stats, []);
+
   return (
     <div className="space-y-10 animate-in">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -64,14 +71,14 @@ const Dashboard = () => {
           <p className="text-slate-500 mt-2 font-medium">Real-time DPDP compliance monitoring and risk discovery.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" icon={Clock}>History</Button>
-          <Button variant="primary" icon={Zap}>Run New Scan</Button>
+          <Button variant="secondary" icon={Clock} onClick={() => navigate('/audit-logs')}>History</Button>
+          <Button variant="primary" icon={Zap} onClick={() => navigate('/upload')}>Run New Scan</Button>
         </div>
       </header>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
+        {memoizedStats.map((stat, i) => (
           <Card key={i} className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div className={`w-12 h-12 ${stat.bg} rounded-2xl flex items-center justify-center`}>
@@ -104,7 +111,7 @@ const Dashboard = () => {
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData}>
+              <AreaChart data={memoizedTrendData}>
                 <defs>
                   <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.15}/>
@@ -133,7 +140,7 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={memoizedPieData}
                   cx="50%"
                   cy="50%"
                   innerRadius={65}
@@ -154,7 +161,7 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-4">
-            {pieData.map((item, i) => (
+            {memoizedPieData.map((item, i) => (
               <div key={i} className="flex items-center justify-between group cursor-default">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />

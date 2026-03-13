@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { ShieldCheck, Mail, Lock, ArrowRight, User, Github, Chrome } from 'lucide-react';
 import axios from 'axios';
 import Button from '../components/ui/Button';
@@ -30,9 +31,12 @@ const Register = () => {
         full_name: formData.full_name,
         password: formData.password
       });
+      toast.success('Account initialized! Please sign in.');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      const msg = err.response?.data?.detail || 'Registration failed. Please try again.';
+      toast.error(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -24,8 +24,8 @@ class PIIDetectionService:
 
     async def process_document(self, db: Session, doc_id: int, text: str):
         entities = self.scan_text(text)
-        # Store in DB
-        # This will be called by Celery worker
-        pass
+        # Store in DB using the repository
+        pii_repo.create_batch(db, doc_id, entities)
+        return entities
 
 pii_detection_service = PIIDetectionService()

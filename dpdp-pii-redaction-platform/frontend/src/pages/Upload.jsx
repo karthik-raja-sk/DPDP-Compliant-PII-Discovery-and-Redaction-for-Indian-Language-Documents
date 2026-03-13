@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { 
   Upload as UploadIcon, 
   X, 
@@ -16,7 +18,8 @@ import {
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
-const UploadPage = () => {
+const Upload = () => {
+  const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [scanning, setScanning] = useState(false);
@@ -51,13 +54,19 @@ const UploadPage = () => {
     setFiles(files.filter((_, i) => i !== index));
   };
 
-  const startScan = () => {
+  const startScan = async () => {
+    if (files.length === 0) return;
     setScanning(true);
-    // Simulate scan
-    setTimeout(() => {
+    try {
+      // Simulate scan
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('Analysis Pipeline Initialized');
+      navigate('/scan-results');
+    } catch (err) {
+      toast.error('Scan failed');
+    } finally {
       setScanning(false);
-      // Navigate or show results
-    }, 2000);
+    }
   };
 
   return (
@@ -207,4 +216,4 @@ const UploadPage = () => {
   );
 };
 
-export default UploadPage;
+export default Upload;

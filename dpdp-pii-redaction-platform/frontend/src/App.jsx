@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
 import Sidebar from './components/common/Sidebar';
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -69,6 +70,19 @@ const Layout = ({ children }) => {
       <div className={`fixed inset-y-0 left-0 z-[70] transition-transform duration-500 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
+
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#0f172a',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            fontSize: '14px',
+          },
+        }}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen(true)} />

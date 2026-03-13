@@ -96,7 +96,10 @@ const Sidebar = ({ onClose }) => {
           <p className="text-[10px] text-slate-500 leading-relaxed mb-4">
             New Indian regulations require immediate redaction of sensitive data.
           </p>
-          <button className="w-full py-2 bg-slate-800 hover:bg-slate-750 text-white text-[10px] font-bold rounded-xl transition-colors">
+          <button 
+            onClick={() => navigate('/settings')}
+            className="w-full py-2 bg-slate-800 hover:bg-slate-750 text-white text-[10px] font-bold rounded-xl transition-colors"
+          >
             View Compliance Docs
           </button>
         </div>

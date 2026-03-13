@@ -11,23 +11,23 @@ PHONE_PATTERN = r'\b(?:\+91|91)?[6-9]\d{9}\b'
 class RegexDetector:
     def __init__(self):
         self.patterns = {
-            "aadhaar": AADHAAR_PATTERN,
-            "pan": PAN_PATTERN,
-            "passport": PASSPORT_PATTERN,
-            "email": EMAIL_PATTERN,
-            "phone": PHONE_PATTERN
+            "aadhaar": re.compile(r'\b\d{4}[ -]?\d{4}[ -]?\d{4}\b'),
+            "pan": re.compile(r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b'),
+            "passport": re.compile(r'\b[A-Z]{1}[0-9]{7}\b'),
+            "email": re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
+            "phone": re.compile(r'\b(?:\+91|91)?[6-9]\d{9}\b')
         }
 
     def detect(self, text: str):
         results = []
         for entity_type, pattern in self.patterns.items():
-            matches = re.finditer(pattern, text)
+            matches = pattern.finditer(text)
             for match in matches:
                 results.append({
                     "entity_type": entity_type.upper(),
                     "original_value": match.group(),
                     "start": match.start(),
                     "end": match.end(),
-                    "confidence": 0.95 # Regex matches are highly confident
+                    "confidence": 0.98 if entity_type != "phone" else 0.90
                 })
         return results

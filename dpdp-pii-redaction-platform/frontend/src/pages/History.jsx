@@ -75,7 +75,18 @@ const History = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {auditLogs.map((log) => (
+              {auditLogs.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-4 opacity-30">
+                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
+                         <HistoryIcon className="w-8 h-8" />
+                      </div>
+                      <p className="text-sm font-black uppercase tracking-widest">No audit records found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : auditLogs.map((log) => (
                 <tr key={log.id} className="group hover:bg-white/[0.02] transition-colors cursor-pointer">
                   <td className="py-5 px-8">
                     <div className="flex items-center gap-4">
