@@ -6,7 +6,6 @@ import Button from '../components/ui/Button';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     full_name: '',
     password: '',
@@ -27,7 +26,6 @@ const Register = () => {
     setError('');
     try {
       await axios.post('/api/v1/auth/register', {
-        username: formData.username,
         email: formData.email,
         full_name: formData.full_name,
         password: formData.password
@@ -103,34 +101,18 @@ const Register = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5 group">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary-500 transition-colors" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all font-light"
-                    placeholder="Alex Smith"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5 group">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Username</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary-500 transition-colors" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all font-light"
-                    placeholder="alex_smith"
-                  />
-                </div>
+            <div className="space-y-1.5 group">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-primary-500 transition-colors" />
+                <input
+                  type="text"
+                  required
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-white text-sm placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-all font-light"
+                  placeholder="Alex Smith"
+                />
               </div>
             </div>
 

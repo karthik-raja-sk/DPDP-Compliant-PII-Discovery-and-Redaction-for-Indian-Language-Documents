@@ -23,7 +23,18 @@ const Login = () => {
       });
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid credentials. Please try again.');
+      console.error('Login error:', err);
+      if (err.response?.status === 422) {
+        // Handle FastAPI validation error structure
+        const details = err.response.data.detail;
+        if (Array.isArray(details)) {
+          setError(details.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(', '));
+        } else {
+          setError(details || 'Validation error');
+        }
+      } else {
+        setError(err.response?.data?.detail || 'Invalid credentials. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
