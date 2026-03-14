@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { 
   Shield, 
   Eye, 
@@ -18,17 +22,68 @@ import {
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
-const mockEntities = [
-  { id: 1, type: 'AADHAAR', value: 'XXXX XXXX 9012', risk: 'HIGH', confidence: 0.98, context: '...his identity card number is 1234 5678 9012...' },
-  { id: 2, type: 'PAN', value: 'XXXXX1234F', risk: 'HIGH', confidence: 0.95, context: '...provided PAN ABCDE1234F for taxation...' },
-  { id: 3, type: 'EMAIL', value: 'r***@gmail.com', risk: 'MEDIUM', confidence: 0.99, context: '...send email to rajesh@example.com...' },
-  { id: 4, type: 'PHONE', value: 'XXXXXXX010', risk: 'MEDIUM', confidence: 0.91, context: '...call on +91 9876543010 for verification...' },
-  { id: 5, type: 'NAME', value: 'Rajesh Kumar', risk: 'MEDIUM', confidence: 0.88, context: '...the applicant name is Rajesh Kumar...' },
-];
+// Removed mockEntities completely
 
 const ScanResult = () => {
-  const [showOriginal, setShowOriginal] = useState(false);
-  const [selectedEntity, setSelectedEntity] = useState(mockEntities[0]);
+  const [searchParams] = useSearchParams();
+  const docId = searchParams.get('docId');
+  const { token } = useAuth();
+  const [viewMode, setViewMode] = useState('original');
+  const [entities, setEntities] = useState([]);
+  const [selectedEntity, setSelectedEntity] = useState(null);
+  const [documentInfo, setDocumentInfo] = useState({ filename: 'Loading...', id: docId || 'NONE' });
+  const [cacheBuster, setCacheBuster] = useState(Date.now());
+  const [redacting, setRedacting] = useState(false);
+  
+  const originalUrl = `/api/v1/upload/${docId}/original?token=${token}`;
+  const redactedUrl = `/api/v1/upload/${docId}/redacted?token=${token}&t=${cacheBuster}`;
+
+  useEffect(() => {
+    if (!docId) return;
+    
+    // Fetch document info (by filtering all uploads)
+    axios.get('/api/v1/upload/').then(res => {
+      const doc = res.data.find(d => String(d.id) === String(docId));
+      if (doc) setDocumentInfo(doc);
+    }).catch(console.error);
+
+    // Fetch entities
+    axios.get(`/api/v1/scan/${docId}/entities`).then(res => {
+      if (res.data && res.data.length > 0) {
+        // Map backend entities to frontend structure
+        const mapped = res.data.map(e => ({
+          id: e.id,
+          type: e.entity_type,
+          value: e.original_value,
+          risk: e.risk_level.toUpperCase(),
+          confidence: e.confidence_score,
+          context: `...entity found between pos ${e.metadata_info?.start || 0} and ${e.metadata_info?.end || 0}...`
+        }));
+        setEntities(mapped);
+        setSelectedEntity(mapped[0]);
+      } else {
+        setEntities([]);
+        setSelectedEntity(null);
+      }
+    }).catch(console.error);
+  }, [docId]);
+
+  const executeMasking = async () => {
+    if (!docId) return toast.error('No document selected');
+    setRedacting(true);
+    try {
+      await axios.post(`/api/v1/redact/${docId}`);
+      setCacheBuster(Date.now());
+      setDocumentInfo(prev => ({ ...prev, status: 'redacted' }));
+      setViewMode('redacted');
+      toast.success('Global masking executed successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to execute masking');
+    } finally {
+      setRedacting(false);
+    }
+  };
 
   return (
     <div className="space-y-10 animate-in">
@@ -43,17 +98,24 @@ const ScanResult = () => {
               <span className="px-2 py-0.5 rounded bg-success-500/10 text-success-400 text-[10px] font-black uppercase tracking-widest">Validated</span>
               <span className="w-1 h-1 rounded-full bg-slate-700"></span>
               <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Processed 2.4s ago
+                <Clock className="w-3 h-3" /> Processed {documentInfo?.created_at ? new Date(documentInfo.created_at).toLocaleDateString() : 'recently'}
               </span>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight uppercase">doc_012_onboarding.pdf</h1>
-            <p className="text-slate-500 mt-1 font-medium">Compliance Report ID: <span className="text-slate-300">SHIELD-9912-X</span></p>
+            <h1 className="text-3xl font-black text-white tracking-tight uppercase">{documentInfo.filename}</h1>
+            <p className="text-slate-500 mt-1 font-medium">Compliance Report ID: <span className="text-slate-300">SHIELD-{documentInfo.id}-X</span></p>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <Button variant="secondary" icon={Download}>Raw Data</Button>
-          <Button variant="primary" icon={ShieldCheck} className="px-10">Execute Global Masking</Button>
+          <Button variant="secondary" icon={Download} onClick={() => {
+            const link = document.createElement('a');
+            link.href = viewMode === 'redacted' || viewMode === 'compare' ? redactedUrl : originalUrl;
+            link.download = documentInfo.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}>Download Document</Button>
+          <Button variant="primary" icon={ShieldCheck} className="px-10" loading={redacting} onClick={executeMasking}>Execute Global Masking</Button>
         </div>
       </header>
 
@@ -70,68 +132,50 @@ const ScanResult = () => {
                 </div>
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Enterprise Preview Engine v2.0</span>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowOriginal(!showOriginal)}
-                className="text-[10px] font-black text-primary-400 hover:text-primary-300"
-                icon={showOriginal ? EyeOff : Eye}
-              >
-                {showOriginal ? 'HIDE SOURCE' : 'REVEAL SOURCE'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setViewMode('original')}
+                  className={`text-[10px] font-black hover:text-white ${viewMode === 'original' ? 'text-white bg-white/10' : 'text-slate-500'}`}
+                  icon={Eye}
+                >ORIGINAL VIEW</Button>
+                {documentInfo.status === 'redacted' && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setViewMode('redacted')}
+                      className={`text-[10px] font-black hover:text-white ${viewMode === 'redacted' ? 'text-white bg-white/10' : 'text-slate-500'}`}
+                      icon={Shield}
+                    >REDACTED VIEW</Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setViewMode('compare')}
+                      className={`text-[10px] font-black hover:text-white ${viewMode === 'compare' ? 'text-white bg-white/10' : 'text-slate-500'}`}
+                      icon={EyeOff}
+                    >COMPARE</Button>
+                  </>
+                )}
+              </div>
             </div>
             
-            <div className="p-12 min-h-[700px] bg-white text-slate-900 font-serif leading-relaxed relative overflow-hidden select-none">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                  <div className="w-full h-full bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
-                </div>
-
-                <div className={showOriginal ? 'relative z-10' : 'relative z-10 blur-[8px] opacity-40 grayscale'}>
-                  <div className="mb-10 flex justify-between items-start border-b-2 border-slate-100 pb-8">
-                    <div>
-                      <h2 className="text-2xl font-black uppercase tracking-tight">Onboarding Request</h2>
-                      <p className="text-slate-500 text-sm italic">Confidential Document • Internal Use Only</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-sm">Ref: 2024/FIN/012</p>
-                      <p className="text-slate-400 text-[10px]">Date: March 12, 2024</p>
-                    </div>
+            <div className="h-[800px] w-full bg-[#111] relative overflow-hidden flex">
+              {viewMode === 'compare' ? (
+                <>
+                  <div className="w-1/2 h-full border-r border-white/10">
+                    <iframe src={originalUrl} className="w-full h-full border-none bg-white" title="Original" />
                   </div>
-
-                  <p className="mb-6">This document serves as a formal onboarding request for the processing entity.</p>
-                  
-                  <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-8">
-                    <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 mb-4">Subject Information</h4>
-                    <p className="mb-4">Verification subject <strong>Rajesh Kumar</strong> has submitted the following identifiers:</p>
-                    <div className="grid grid-cols-2 gap-8">
-                      <div>
-                        <p className="text-[10px] uppercase font-black text-slate-400 mb-1">Aadhaar Number</p>
-                        <p className="font-mono text-lg font-bold">1234 5678 9012</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase font-black text-slate-400 mb-1">PAN Card</p>
-                        <p className="font-mono text-lg font-bold">ABCDE1234F</p>
-                      </div>
-                    </div>
+                  <div className="w-1/2 h-full">
+                    <iframe src={redactedUrl} className="w-full h-full border-none bg-white" title="Redacted" />
                   </div>
-
-                  <p>For further communication, reach out at <span className="underline font-bold">rajesh@example.com</span> or contact directly via registered phone <span className="font-bold">+91 9876543010</span>.</p>
-                </div>
-
-                {!showOriginal && (
-                  <div className="absolute inset-0 flex items-center justify-center p-12 text-center z-20">
-                    <div className="glass-card p-10 rounded-[40px] border border-white/5 shadow-3xl max-w-sm">
-                      <div className="w-20 h-20 bg-primary-500 rounded-[30px] flex items-center justify-center text-white mx-auto mb-8 shadow-2xl shadow-primary-500/40">
-                        <Lock className="w-10 h-10" />
-                      </div>
-                      <h4 className="font-black text-2xl text-white mb-3">Redaction Active</h4>
-                      <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                        Sensitive data is being masked by the SHIELD engine. Click "Reveal Source" above to bypass.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                </>
+              ) : viewMode === 'redacted' ? (
+                 <iframe src={redactedUrl} className="w-full h-full border-none bg-white" title="Redacted" />
+              ) : (
+                 <iframe src={originalUrl} className="w-full h-full border-none bg-white" title="Original" />
+              )}
             </div>
           </Card>
         </div>
@@ -142,11 +186,11 @@ const ScanResult = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 blur-3xl rounded-full" />
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-white">PII Insights</h3>
-              <span className="text-xs font-black text-primary-400 font-mono bg-primary-500/10 px-3 py-1 rounded-full">{mockEntities.length} FOUND</span>
+              <span className="text-xs font-black text-primary-400 font-mono bg-primary-500/10 px-3 py-1 rounded-full">{entities.length} FOUND</span>
             </div>
             
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-              {mockEntities.map((entity) => (
+              {entities.map((entity) => (
                 <div 
                   key={entity.id} 
                   onClick={() => setSelectedEntity(entity)}
@@ -165,7 +209,7 @@ const ScanResult = () => {
                       </div>
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{entity.type}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase">98% Match</span>
+                    <span className="text-[10px] font-bold text-slate-600 uppercase">{Math.round((entity.confidence || 0) * 100)}% Match</span>
                   </div>
                   <p className="text-sm font-bold text-white mb-2 font-mono group-hover/item:text-primary-400 transition-colors uppercase tracking-tight">{entity.value}</p>
                   <div className="flex items-center justify-between">
@@ -190,19 +234,23 @@ const ScanResult = () => {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-slate-300">DPDP Act Compliance</span>
-                  <span className="text-[10px] font-black text-indigo-400">88%</span>
+                  <span className="text-[10px] font-black text-indigo-400">
+                    {entities.length > 0 ? Math.max(0, 100 - (entities.filter(e => e.risk === 'HIGH').length / entities.length * 100)).toFixed(1) : 100}%
+                  </span>
                 </div>
                 <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 w-[88%] rounded-full shadow-lg shadow-indigo-500/40" />
+                  <div className="h-full bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/40" style={{width: `${entities.length > 0 ? Math.max(0, 100 - (entities.filter(e => e.risk === 'HIGH').length / entities.length * 100)) : 100}%`}} />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-slate-300">Risk Mitigation Score</span>
-                  <span className="text-[10px] font-black text-success-400">92%</span>
+                  <span className="text-[10px] font-black text-success-400">
+                    {viewMode === 'redacted' ? '100% (Secured)' : `${entities.length > 0 ? Math.max(0, 100 - (entities.length * 5)).toFixed(1) : 100}%`}
+                  </span>
                 </div>
                 <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
-                  <div className="h-full bg-success-500 w-[92%] rounded-full shadow-lg shadow-success-500/40" />
+                  <div className="h-full bg-success-500 rounded-full shadow-lg shadow-success-500/40" style={{width: viewMode === 'redacted' ? '100%' : `${entities.length > 0 ? Math.max(0, 100 - (entities.length * 5)) : 100}%`}} />
                 </div>
               </div>
             </div>
@@ -211,7 +259,7 @@ const ScanResult = () => {
             </p>
           </Card>
 
-          <Button variant="secondary" className="w-full rounded-2xl py-4 group" icon={HistoryIcon}>
+          <Button variant="secondary" className="w-full rounded-2xl py-4 group" icon={HistoryIcon} onClick={() => window.location.href = '/audit-logs'}>
             View Processing Logs <ExternalLink className="w-3 h-3 ml-1 opacity-40 group-hover:opacity-100 transition-opacity" />
           </Button>
         </div>

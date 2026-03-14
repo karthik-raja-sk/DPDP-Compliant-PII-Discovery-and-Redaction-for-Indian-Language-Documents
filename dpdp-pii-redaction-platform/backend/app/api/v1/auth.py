@@ -28,3 +28,23 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
 @router.get("/me", response_model=User)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.put("/me", response_model=User)
+def update_me(obj_in: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if obj_in.email and obj_in.email != current_user.email:
+        existing = user_repo.get_by_email(db, email=obj_in.email)
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already taken")
+    
+    # Simple manual update to avoid full repository refactor
+    if obj_in.full_name is not None:
+        current_user.full_name = obj_in.full_name
+    if obj_in.email is not None:
+        current_user.email = obj_in.email
+    if obj_in.password:
+        from app.core.security import get_password_hash
+        current_user.hashed_password = get_password_hash(obj_in.password)
+        
+    db.commit()
+    db.refresh(current_user)
+    return current_user

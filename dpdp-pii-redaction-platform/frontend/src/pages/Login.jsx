@@ -131,7 +131,7 @@ const Login = () => {
             <div className="space-y-2 group">
               <div className="flex justify-between items-center px-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Password</label>
-                <a href="#" className="text-[10px] font-bold text-primary-500 hover:text-primary-400 uppercase tracking-wider">Forgot?</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); toast("Forgot Password functionality coming soon!"); }} className="text-[10px] font-bold text-primary-500 hover:text-primary-400 uppercase tracking-wider">Forgot?</a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 group-focus-within:text-primary-500 transition-colors" />
@@ -164,20 +164,7 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-10 flex items-center gap-4">
-            <div className="flex-1 h-px bg-white/5"></div>
-            <p className="text-slate-600 text-[10px] uppercase font-black">Or continue with</p>
-            <div className="flex-1 h-px bg-white/5"></div>
-          </div>
-
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-3 py-3 bg-slate-900/40 border border-white/5 rounded-2xl text-slate-300 hover:bg-slate-900 hover:text-white transition-all font-bold text-xs group">
-              <Github className="w-4 h-4 group-hover:scale-110 transition-transform" /> GitHub
-            </button>
-            <button className="flex items-center justify-center gap-3 py-3 bg-slate-900/40 border border-white/5 rounded-2xl text-slate-300 hover:bg-slate-900 hover:text-white transition-all font-bold text-xs group">
-              <Chrome className="w-4 h-4 group-hover:scale-110 transition-transform" /> Google
-            </button>
-          </div>
+          {/* Removed social login placeholders for production release */}
 
           <p className="mt-10 text-center text-slate-500 text-sm font-medium">
             Don't have an account?{' '}

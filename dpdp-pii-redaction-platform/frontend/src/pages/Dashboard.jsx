@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { 
   AreaChart, 
   Area, 
@@ -21,47 +22,81 @@ import {
   Clock,
   Search,
   Zap,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
-const trendData = [
-  { name: 'Mon', count: 420 },
-  { name: 'Tue', count: 580 },
-  { name: 'Wed', count: 490 },
-  { name: 'Thu', count: 820 },
-  { name: 'Fri', count: 710 },
-  { name: 'Sat', count: 320 },
-  { name: 'Sun', count: 450 },
-];
-
-const pieData = [
-  { name: 'Aadhaar', value: 45, color: '#0ea5e9' },
-  { name: 'PAN', value: 25, color: '#6366f1' },
-  { name: 'Phone', value: 20, color: '#f59e0b' },
-  { name: 'Other', value: 10, color: '#10b981' },
-];
-
-const stats = [
-  { label: 'Files Analyzed', value: '2,482', change: '+12.5%', icon: FileText, color: 'text-primary-400', bg: 'bg-primary-500/10' },
-  { label: 'Entities Found', value: '45.1k', change: '+8.2%', icon: Shield, color: 'text-accent-400', bg: 'bg-accent-500/10' },
-  { label: 'Risk Alerts', value: '128', change: '-4.1%', icon: AlertCircle, color: 'text-danger-400', bg: 'bg-danger-500/10' },
-  { label: 'Privacy Score', value: '98.2', change: '+0.4%', icon: CheckCircle, color: 'text-success-400', bg: 'bg-success-500/10' },
-];
-
-const recentActivity = [
-  { id: 1, doc: 'customer_kyc_01.pdf', status: 'Completed', pii: 12, time: '2 mins ago' },
-  { id: 2, doc: 'invoice_march_24.png', status: 'In Review', pii: 5, time: '15 mins ago' },
-  { id: 3, doc: 'employee_record.xlsx', status: 'Completed', pii: 28, time: '1 hour ago' },
-];
-
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [documents, setDocuments] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
-  const memoizedTrendData = useMemo(() => trendData, []);
-  const memoizedPieData = useMemo(() => pieData, []);
-  const memoizedStats = useMemo(() => stats, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [docsRes, statsRes] = await Promise.all([
+          axios.get('/api/v1/upload/'),
+          axios.get('/api/v1/upload/stats')
+        ]);
+        setDocuments(docsRes.data);
+        setDashboardStats(statsRes.data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Remove this document from records?')) return;
+    try {
+      await axios.delete(`/api/v1/upload/${id}`);
+      // toast.success('Document removed'); // Assuming toast is available globally or imported
+      setDocuments(prev => ({
+        ...prev,
+        items: prev.items.filter(d => d.id !== id)
+      }));
+      // Optionally refresh stats
+      const statsRes = await axios.get('/api/v1/upload/stats');
+      setDashboardStats(statsRes.data);
+    } catch (err) {
+      // toast.error('Deletion failed'); // Assuming toast is available globally or imported
+      console.error("Deletion failed:", err);
+    }
+  };
+  // Initial state logic removed to fix duplicates
+
+  const memoizedTrendData = useMemo(() => dashboardStats?.trend_data || [], [dashboardStats]);
+  const memoizedPieData = useMemo(() => dashboardStats?.pie_data || [], [dashboardStats]);
+  
+  const memoizedStats = useMemo(() => {
+    if (!dashboardStats) return [
+      { label: 'Files Analyzed', value: '0', change: '0%', icon: FileText, color: 'text-primary-400', bg: 'bg-primary-500/10' },
+      { label: 'Entities Found', value: '0', change: '0%', icon: Shield, color: 'text-accent-400', bg: 'bg-accent-500/10' },
+      { label: 'Risk Alerts', value: '0', change: '0%', icon: AlertCircle, color: 'text-danger-400', bg: 'bg-danger-500/10' },
+      { label: 'Privacy Score', value: '100', change: '0%', icon: CheckCircle, color: 'text-success-400', bg: 'bg-success-500/10' },
+    ];
+    return [
+      { label: 'Files Analyzed', value: dashboardStats.total_files.toString(), change: 'Live', icon: FileText, color: 'text-primary-400', bg: 'bg-primary-500/10' },
+      { label: 'Entities Found', value: dashboardStats.total_entities.toString(), change: 'Live', icon: Shield, color: 'text-accent-400', bg: 'bg-accent-500/10' },
+      { label: 'Risk Alerts', value: dashboardStats.risk_alerts.toString(), change: 'Live', icon: AlertCircle, color: 'text-danger-400', bg: 'bg-danger-500/10' },
+      { label: 'Privacy Score', value: dashboardStats.privacy_score.toString(), change: 'Live', icon: CheckCircle, color: 'text-success-400', bg: 'bg-success-500/10' },
+    ];
+  }, [dashboardStats]);
+
+  const currentRecentActivity = useMemo(() => {
+    if (!documents?.items) return [];
+    return documents.items.slice(0, 5).map(doc => ({
+      id: doc.id,
+      doc: doc.filename,
+      status: doc.status === 'processing' ? 'In Review' : (doc.status === 'scanned' || doc.status === 'redacted' ? 'Completed' : 'Pending'),
+      pii: doc.status === 'redacted' ? 0 : 'N/A', // Cannot get individual counts efficiently without another API call per file or joint query setup
+      time: 'Recent'
+    }));
+  }, [documents]);
 
   return (
     <div className="space-y-10 animate-in">
@@ -106,7 +141,6 @@ const Dashboard = () => {
             </div>
             <select className="bg-slate-900 border border-white/5 rounded-xl px-4 py-2 text-xs font-bold text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all">
               <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
             </select>
           </div>
           <div className="h-[350px] w-full">
@@ -148,26 +182,34 @@ const Dashboard = () => {
                   paddingAngle={8}
                   dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
+                  {memoizedPieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-black text-white">45%</span>
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Aadhaar</span>
+              <span className="text-3xl font-black text-white">
+                {memoizedPieData.length > 0 
+                  ? `${Math.round((memoizedPieData[0].value / Math.max(dashboardStats?.total_entities, 1)) * 100)}%`
+                  : '0%'}
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                {memoizedPieData.length > 0 ? memoizedPieData[0].name : 'No Data'}
+              </span>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
             {memoizedPieData.map((item, i) => (
               <div key={i} className="flex items-center justify-between group cursor-default">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">{item.name}</span>
                 </div>
-                <span className="text-xs font-black text-slate-500 font-mono">{item.value}%</span>
+                <span className="text-xs font-black text-slate-500 font-mono">
+                   {Math.round((item.value / Math.max(dashboardStats?.total_entities, 1)) * 100)}%
+                </span>
               </div>
             ))}
           </div>
@@ -180,7 +222,7 @@ const Dashboard = () => {
         <Card className="lg:col-span-2 overflow-hidden">
           <div className="p-8 pb-4 flex items-center justify-between">
              <h3 className="text-xl font-bold text-white">Recent Activity</h3>
-             <Button variant="ghost" size="sm" className="text-primary-500">View All</Button>
+             <Button variant="ghost" size="sm" className="text-primary-500" onClick={() => navigate('/audit-logs')}>View All</Button>
           </div>
           <div className="px-4 pb-4">
             <table className="w-full">
@@ -193,7 +235,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {recentActivity.map((item) => (
+                {currentRecentActivity.map((item) => (
                   <tr key={item.id} className="group hover:bg-white/[0.02] transition-colors cursor-pointer">
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
@@ -211,7 +253,17 @@ const Dashboard = () => {
                       </span>
                     </td>
                     <td className="py-4 px-4 text-sm font-black text-slate-300">{item.pii} Items</td>
-                    <td className="py-4 px-4 text-right text-xs font-bold text-slate-500">{item.time}</td>
+                    <td className="py-4 px-4 text-right">
+                      <div className="flex items-center justify-end gap-3 font-bold text-slate-500 text-xs">
+                        {item.time}
+                        <button 
+                          onClick={(e) => handleDelete(item.id, e)}
+                          className="w-8 h-8 rounded-lg bg-slate-900 border border-white/5 flex items-center justify-center text-slate-600 hover:text-danger-500 hover:border-danger-500/20 transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -231,7 +283,7 @@ const Dashboard = () => {
               Based on your recent scans, we recommend updating your redaction rules for Hindi scripts.
             </p>
           </div>
-          <Button variant="primary" size="lg" className="w-full rounded-2xl py-4" icon={ChevronRight}>
+          <Button variant="primary" size="lg" className="w-full rounded-2xl py-4" icon={ChevronRight} onClick={() => navigate('/settings')}>
             View Recommendations
           </Button>
         </Card>

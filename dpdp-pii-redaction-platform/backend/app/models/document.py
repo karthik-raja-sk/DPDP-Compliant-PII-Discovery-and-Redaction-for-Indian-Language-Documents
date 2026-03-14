@@ -6,7 +6,11 @@ from app.core.database import Base
 
 class DocumentStatus(str, enum.Enum):
     UPLOADED = "uploaded"
+    QUEUED = "queued"
     PROCESSING = "processing"
+    EXTRACTING_TEXT = "extracting text"
+    DETECTING_PII = "detecting pii"
+    SAVING_ENTITIES = "saving entities"
     SCANNED = "scanned"
     REDACTED = "redacted"
     FAILED = "failed"

@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import { 
   Upload as UploadIcon, 
   X, 
@@ -20,9 +22,11 @@ import Button from '../components/ui/Button';
 
 const Upload = () => {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [scanning, setScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState('');
   const inputRef = useRef(null);
 
   const handleDrag = (e) => {
@@ -57,15 +61,56 @@ const Upload = () => {
   const startScan = async () => {
     if (files.length === 0) return;
     setScanning(true);
+    let lastDocId = null;
     try {
-      // Simulate scan
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('Analysis Pipeline Initialized');
-      navigate('/scan-results');
+      for (const file of files) {
+        setScanStatus(`Uploading ${file.name}...`);
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await axios.post('/api/v1/upload/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        const docId = uploadRes.data.id;
+        lastDocId = docId;
+        
+        // Start background scan
+        setScanStatus(`[${file.name}] QUEUED`);
+        await axios.post(`/api/v1/scan/${docId}`);
+        
+        // Wait for SSE completion
+        await new Promise((resolve, reject) => {
+          // Send token via query param because EventSource does not support Headers
+          const evtSource = new EventSource(`/api/v1/scan/${docId}/stream?token=${token}`);
+          
+          evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.error) {
+              evtSource.close();
+              reject(new Error(data.error));
+            } else if (data.status) {
+              setScanStatus(`[${file.name}] ${data.status.toUpperCase()}`);
+              if (['scanned', 'redacted', 'failed'].includes(data.status)) {
+                evtSource.close();
+                resolve();
+              }
+            }
+          };
+          
+          evtSource.onerror = function(err) {
+            evtSource.close();
+            reject(new Error("Lost connection to scan stream"));
+          };
+        });
+      }
+      toast.success('Analysis Pipeline Completed');
+      if (lastDocId) navigate(`/scan-results?docId=${lastDocId}`);
+      else navigate('/scan-results');
     } catch (err) {
-      toast.error('Scan failed');
+      toast.error(`Scan interrupted: ${err.message || 'Unknown error'}`);
+      console.error(err);
     } finally {
       setScanning(false);
+      setScanStatus('');
     }
   };
 
@@ -202,7 +247,7 @@ const Upload = () => {
                   onClick={startScan}
                   icon={scanning ? null : ArrowRight}
                 >
-                  {scanning ? 'Initializing Engine...' : 'Initialize Analysis Pipeline'}
+                  {scanning ? (scanStatus || 'Initializing Engine...') : 'Initialize Analysis Pipeline'}
                 </Button>
                 <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em] mt-6">
                   Secured by AES-256 Encryption

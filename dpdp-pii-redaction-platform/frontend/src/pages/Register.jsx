@@ -22,6 +22,11 @@ const Register = () => {
       setError('Passwords do not match');
       return;
     }
+    
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -34,7 +39,17 @@ const Register = () => {
       toast.success('Account initialized! Please sign in.');
       navigate('/login');
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Registration failed. Please try again.';
+      let msg = 'Registration failed. Please try again.';
+      if (err.response?.status === 422) {
+        const details = err.response.data.detail;
+        if (Array.isArray(details)) {
+          msg = details.map(d => `${d.loc[d.loc.length - 1]}: ${d.msg}`).join(', ');
+        } else {
+          msg = details || 'Validation error';
+        }
+      } else {
+        msg = err.response?.data?.detail || msg;
+      }
       toast.error(msg);
       setError(msg);
     } finally {
