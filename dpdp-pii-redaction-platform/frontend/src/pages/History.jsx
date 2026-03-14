@@ -15,16 +15,9 @@ import {
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { toast } from 'react-hot-toast';
 
-const auditLogs = [
-  { id: 1, doc: 'customer_onboarding_final.pdf', date: 'Mar 12, 2024', time: '14:20', pii: 15, risk: 'HIGH', status: 'Redacted' },
-  { id: 2, doc: 'employee_payroll_data.xlsx', date: 'Mar 12, 2024', time: '11:05', pii: 42, risk: 'MEDIUM', status: 'Flagged' },
-  { id: 3, doc: 'vendor_contract_v2.docx', date: 'Mar 11, 2024', time: '16:45', pii: 5, risk: 'LOW', status: 'Cleared' },
-  { id: 4, doc: 'passport_scan_john.jpg', date: 'Mar 11, 2024', time: '09:12', pii: 2, risk: 'HIGH', status: 'Redacted' },
-  { id: 5, doc: 'internal_memo_draft.txt', date: 'Mar 10, 2024', time: '18:30', pii: 0, risk: 'NONE', status: 'Cleared' },
-  { id: 6, doc: 'audit_report_q1.pdf', date: 'Mar 10, 2024', time: '14:15', pii: 8, risk: 'MEDIUM', status: 'Redacted' },
-  { id: 7, doc: 'kyc_compliance_batch_1.zip', date: 'Mar 09, 2024', time: '10:00', pii: 156, risk: 'HIGH', status: 'Redacted' },
-];
+
 
 const History = () => {
   const [logs, setLogs] = useState([]);
@@ -50,7 +43,7 @@ const History = () => {
         setTotalPages(res.data.total_pages || 1);
         setTotalCount(res.data.total || 0);
       })
-      .catch(console.error);
+      .catch(() => toast.error('Failed to load history logs'));
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);

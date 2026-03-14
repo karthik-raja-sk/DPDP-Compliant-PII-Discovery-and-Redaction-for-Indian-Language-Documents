@@ -40,24 +40,31 @@ def scan_document_task(document_id: int):
         time.sleep(1) # simulate slight delay for UI demonstration
         
         # Phase 2: Extracting Text
-        doc_repo.update_status(db, document_id, "extracting text")
+        doc_repo.update_status(db, document_id, "extracting")
         
         text = ""
         try:
-            # Simple text extraction. If PDF, use pypdf if installed.
             if doc.file_path.lower().endswith(".pdf"):
-                try:
-                    import pypdf
-                    with open(doc.file_path, "rb") as f:
-                        reader = pypdf.PdfReader(f)
-                        text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
-                except ImportError:
-                    text = f"Sample synthesized content: My Aadhaar number is 1234 5678 9012 and PAN is ABCDE1234F."
+                import fitz
+                doc_pdf = fitz.open(doc.file_path)
+                text_list = []
+                for page in doc_pdf:
+                    text_list.append(page.get_text())
+                text = " ".join(text_list)
+                doc_pdf.close()
             else:
                 with open(doc.file_path, "r", encoding="utf-8") as f:
                     text = f.read()
         except Exception as e:
-            text = f"Sample text fallback due to err: {str(e)}. Aadhaar number: 1234 5678 9012."
+            # Fallback to pypdf if fitz fails for some reason
+            try:
+                import pypdf
+                with open(doc.file_path, "rb") as f:
+                    reader = pypdf.PdfReader(f)
+                    text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            except:
+                doc_repo.update_status(db, document_id, "failed")
+                return f"Extraction failed: {str(e)}"
 
         # simulated work
         time.sleep(1)

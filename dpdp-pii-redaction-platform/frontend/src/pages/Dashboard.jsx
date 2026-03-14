@@ -25,6 +25,7 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
@@ -54,7 +55,7 @@ const Dashboard = () => {
     if (!window.confirm('Remove this document from records?')) return;
     try {
       await axios.delete(`/api/v1/upload/${id}`);
-      // toast.success('Document removed'); // Assuming toast is available globally or imported
+      toast.success('Document removed');
       setDocuments(prev => ({
         ...prev,
         items: prev.items.filter(d => d.id !== id)
@@ -63,7 +64,7 @@ const Dashboard = () => {
       const statsRes = await axios.get('/api/v1/upload/stats');
       setDashboardStats(statsRes.data);
     } catch (err) {
-      // toast.error('Deletion failed'); // Assuming toast is available globally or imported
+      toast.error('Deletion failed');
       console.error("Deletion failed:", err);
     }
   };

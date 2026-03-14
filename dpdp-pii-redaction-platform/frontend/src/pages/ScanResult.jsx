@@ -41,11 +41,10 @@ const ScanResult = () => {
   useEffect(() => {
     if (!docId) return;
     
-    // Fetch document info (by filtering all uploads)
-    axios.get('/api/v1/upload/').then(res => {
-      const doc = res.data.find(d => String(d.id) === String(docId));
-      if (doc) setDocumentInfo(doc);
-    }).catch(console.error);
+    // Fetch document info
+    axios.get(`/api/v1/upload/${docId}`).then(res => {
+      setDocumentInfo(res.data);
+    }).catch(() => {});
 
     // Fetch entities
     axios.get(`/api/v1/scan/${docId}/entities`).then(res => {
@@ -65,7 +64,7 @@ const ScanResult = () => {
         setEntities([]);
         setSelectedEntity(null);
       }
-    }).catch(console.error);
+    }).catch(() => {});
   }, [docId]);
 
   const executeMasking = async () => {
@@ -78,7 +77,6 @@ const ScanResult = () => {
       setViewMode('redacted');
       toast.success('Global masking executed successfully');
     } catch (err) {
-      console.error(err);
       toast.error('Failed to execute masking');
     } finally {
       setRedacting(false);
@@ -108,8 +106,10 @@ const ScanResult = () => {
         
         <div className="flex items-center gap-3">
           <Button variant="secondary" icon={Download} onClick={() => {
+            const baseUrl = viewMode === 'redacted' || viewMode === 'compare' ? redactedUrl : originalUrl;
+            const fullUrl = `${baseUrl}&download=true`;
             const link = document.createElement('a');
-            link.href = viewMode === 'redacted' || viewMode === 'compare' ? redactedUrl : originalUrl;
+            link.href = fullUrl;
             link.download = documentInfo.filename;
             document.body.appendChild(link);
             link.click();
@@ -161,16 +161,18 @@ const ScanResult = () => {
               </div>
             </div>
             
-            <div className="h-[800px] w-full bg-[#111] relative overflow-hidden flex">
+            <div className="h-[800px] w-full bg-[#111] relative overflow-hidden flex flex-col">
               {viewMode === 'compare' ? (
-                <>
-                  <div className="w-1/2 h-full border-r border-white/10">
-                    <iframe src={originalUrl} className="w-full h-full border-none bg-white" title="Original" />
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="w-1/2 h-full border-r border-white/10 flex flex-col">
+                    <div className="bg-slate-950 p-2 text-center text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-white/5">Original Source</div>
+                    <iframe src={originalUrl} className="flex-1 w-full border-none bg-white" title="Original" />
                   </div>
-                  <div className="w-1/2 h-full">
-                    <iframe src={redactedUrl} className="w-full h-full border-none bg-white" title="Redacted" />
+                  <div className="w-1/2 h-full flex flex-col">
+                    <div className="bg-primary-950/20 p-2 text-center text-[9px] font-black text-primary-400 uppercase tracking-[0.2em] border-b border-white/5">Redacted Output</div>
+                    <iframe src={redactedUrl} className="flex-1 w-full border-none bg-white" title="Redacted" />
                   </div>
-                </>
+                </div>
               ) : viewMode === 'redacted' ? (
                  <iframe src={redactedUrl} className="w-full h-full border-none bg-white" title="Redacted" />
               ) : (

@@ -25,10 +25,7 @@ async def scan_document(
     # Enqueue real Celery Task
     doc_repo.update_status(db, document_id, "queued")
     try:
-        if settings.REDIS_HOST != "localhost" and False: # Disabled for Windows Local
-            scan_document_task.delay(document_id)
-        else:
-            raise Exception("Redis not available on local Windows, using fallback")
+        scan_document_task.delay(document_id)
     except Exception as e:
         # Fallback if Redis/Celery is not running in local debug
         background_tasks.add_task(scan_document_task, document_id)
@@ -51,6 +48,7 @@ async def scan_stream(
             if await request.is_disconnected():
                 break
 
+            db.expire_all() # Ensure we get fresh data from DB
             doc = doc_repo.get_by_id(db, document_id)
             if not doc:
                 yield {"data": '{"error": "Document not found"}'}
@@ -60,6 +58,7 @@ async def scan_stream(
             
             # End stream on terminal states
             if doc.status in ["scanned", "redacted", "failed"]:
+                yield {"data": f'{{"status": "{doc.status}"}}'}
                 break
                 
             await asyncio.sleep(1)

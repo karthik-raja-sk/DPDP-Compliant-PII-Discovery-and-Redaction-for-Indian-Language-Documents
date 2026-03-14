@@ -43,11 +43,19 @@ docker-compose -f infra/docker/docker-compose.yml up --build
 ```
 
 ### 3. Local Manual Setup
-**Backend:**
+**Backend API:**
 ```bash
 cd backend
+# 1. Start Infrastructure (Redis)
+# docker run --name dpdp-redis -p 6379:6379 -d redis
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8002
+```
+
+**Celery Worker:**
+```bash
+cd backend
+celery -A app.worker worker --loglevel=info -P solo
 ```
 
 **Frontend:**

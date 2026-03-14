@@ -82,19 +82,30 @@ const Upload = () => {
           // Send token via query param because EventSource does not support Headers
           const evtSource = new EventSource(`/api/v1/scan/${docId}/stream?token=${token}`);
           
-          evtSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.error) {
-              evtSource.close();
-              reject(new Error(data.error));
-            } else if (data.status) {
-              setScanStatus(`[${file.name}] ${data.status.toUpperCase()}`);
-              if (['scanned', 'redacted', 'failed'].includes(data.status)) {
+            evtSource.onmessage = function(event) {
+              const data = JSON.parse(event.data);
+              if (data.error) {
                 evtSource.close();
-                resolve();
+                reject(new Error(data.error));
+              } else if (data.status) {
+                const statusMap = {
+                  'queued': 'Queued in Engine',
+                  'processing': 'Initializing Processor',
+                  'extracting': 'Extracting Document Text',
+                  'detecting pii': 'Identifying Sensitive Entities',
+                  'saving entities': 'Finalizing Report',
+                  'scanned': 'Completed'
+                };
+                setScanStatus(`[${file.name}] ${statusMap[data.status] || data.status.toUpperCase()}`);
+                if (data.status === 'failed') {
+                  evtSource.close();
+                  reject(new Error("Document processing failed on server"));
+                } else if (['scanned', 'redacted'].includes(data.status)) {
+                  evtSource.close();
+                  resolve();
+                }
               }
-            }
-          };
+            };
           
           evtSource.onerror = function(err) {
             evtSource.close();
@@ -107,7 +118,6 @@ const Upload = () => {
       else navigate('/scan-results');
     } catch (err) {
       toast.error(`Scan interrupted: ${err.message || 'Unknown error'}`);
-      console.error(err);
     } finally {
       setScanning(false);
       setScanStatus('');
@@ -238,8 +248,23 @@ const Upload = () => {
               )}
             </div>
 
-            {files.length > 0 && (
-              <div className="pt-8 mt-8 border-t border-white/5">
+              <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest animate-pulse">
+                      {scanStatus || 'Initializing Engine...'}
+                    </span>
+                    <span className="text-[10px] font-black text-slate-500">
+                      {scanning ? 'SECURE_CHANNEL_ACTIVE' : ''}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                    <div 
+                      className="h-full bg-primary-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(14,165,233,0.5)]" 
+                      style={{ width: scanning ? '100%' : '0%' }}
+                    />
+                  </div>
+                </div>
                 <Button 
                   className="w-full rounded-[20px] py-5 shadow-2xl shadow-primary-500/20" 
                   size="lg"
@@ -247,13 +272,12 @@ const Upload = () => {
                   onClick={startScan}
                   icon={scanning ? null : ArrowRight}
                 >
-                  {scanning ? (scanStatus || 'Initializing Engine...') : 'Initialize Analysis Pipeline'}
+                  {scanning ? 'Processing Documents...' : 'Initialize Analysis Pipeline'}
                 </Button>
-                <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em] mt-6">
+                <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em] mt-2">
                   Secured by AES-256 Encryption
                 </p>
               </div>
-            )}
           </Card>
         </div>
       </div>

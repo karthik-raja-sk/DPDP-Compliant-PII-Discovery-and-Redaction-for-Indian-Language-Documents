@@ -131,9 +131,28 @@ def get_documents_paginated(
         "has_prev": result["has_prev"]
     }
 
+@router.get("/{document_id}")
+def get_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    doc = doc_repo.get_by_id(db, document_id)
+    if not doc or doc.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {
+        "id": doc.id,
+        "filename": doc.filename,
+        "status": doc.status,
+        "created_at": doc.created_at.isoformat() if doc.created_at else None,
+        "file_type": doc.file_type,
+        "file_size": doc.file_size
+    }
+
 @router.get("/{document_id}/original")
 def get_original_file(
     document_id: int,
+    download: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -144,11 +163,16 @@ def get_original_file(
     if not os.path.exists(doc.file_path):
         raise HTTPException(status_code=404, detail="File not found on server")
         
-    return FileResponse(doc.file_path, media_type=doc.file_type, filename=doc.filename)
+    return FileResponse(
+        doc.file_path, 
+        media_type=doc.file_type, 
+        filename=doc.filename if download else None
+    )
 
 @router.get("/{document_id}/redacted")
 def get_redacted_file(
     document_id: int,
+    download: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -158,13 +182,19 @@ def get_redacted_file(
         
     redacted_path = os.path.join(settings.REDACTED_DIR, f"redacted_{doc.id}_{doc.filename}")
     if not os.path.exists(redacted_path):
-        # Fallback to original if redacted not generated yet, 
-        # or raise error
         if doc.status == "redacted":
             raise HTTPException(status_code=404, detail="Redacted file missing")
-        return FileResponse(doc.file_path, media_type=doc.file_type, filename=doc.filename)
+        return FileResponse(
+            doc.file_path, 
+            media_type=doc.file_type, 
+            filename=doc.filename if download else None
+        )
         
-    return FileResponse(redacted_path, media_type=doc.file_type, filename=f"redacted_{doc.filename}")
+    return FileResponse(
+        redacted_path, 
+        media_type=doc.file_type, 
+        filename=f"redacted_{doc.filename}" if download else None
+    )
 
 @router.delete("/")
 def purge_documents(
