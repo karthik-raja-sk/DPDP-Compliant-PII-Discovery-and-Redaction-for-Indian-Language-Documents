@@ -1,1 +1,0 @@
-import{c as t}from"./index-DItdidaO.js";const h=t("ChevronRight",[["path",{d:"m9 18 6-6-6-6",key:"mthhwq"}]]),o=t("Shield",[["path",{d:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10",key:"1irkt0"}]]);export{h as C,o as S};

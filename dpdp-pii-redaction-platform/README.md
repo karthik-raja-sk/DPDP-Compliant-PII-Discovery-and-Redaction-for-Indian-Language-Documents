@@ -1,76 +1,110 @@
 # DPDP-Compliant Multilingual PII Discovery & Redaction Platform
 
-A production-style, enterprise-grade full-stack platform for detecting, classifying, and redacting Personally Identifiable Information (PII) from documents, specifically designed for the Indian regulatory context (DPDP Act).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat&logo=react)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.5-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 
-## 🚀 Key Features
+An enterprise-grade, production-ready solution for automated PII (Personally Identifiable Information) discovery, classification, and redaction. Specifically engineered to address the regulatory requirements of India's **Digital Personal Data Protection (DPDP) Act, 2023**.
 
-- **Hybrid PII Discovery**: Combines Regex (Aadhaar, PAN, Passport) with NLP/NER (Names, Locations, Orgs).
-- **Indian Language Support**: Advanced support for Hindi, Tamil, Telugu, and other regional languages.
-- **Dynamic Redaction**: Multiple modes (Full Masking, Partial Masking, Entity Labeling).
-- **DPDP Risk Scoring**: Automated risk level assessment and compliance tracking.
-- **Enterprise Dashboard**: Real-time analytics, discovery trends, and audit logs.
-- **Scalable Architecture**: FastAPI async backend with Celery/Redis for intensive ML tasks.
+---
 
-## 🛠 Tech Stack
+## 🌟 Key Features
 
-- **Frontend**: React, Vite, Tailwind CSS, Recharts, Framer Motion.
-- **Backend**: Python FastAPI, SQLAlchemy, Alembic, Pydantic.
-- **Database**: PostgreSQL (Structured data), Redis (Cache/Broker).
-- **AI/ML**: Spacy, Regex rules, Custom Confidence Scorer.
-- **Infrastructure**: Docker, Docker Compose, Nginx.
+- 🔍 **Hybrid Multi-modal Discovery**: Leverage high-precision Regex patterns (Aadhaar, PAN, Passport) combined with advanced NLP/NER (Names, Locations, Organizations).
+- 🇮🇳 **Multilingual Support**: Specialized models for major Indian languages including Hindi, Tamil, Telugu, and more.
+- 🛡️ **Dynamic Redaction Engine**: Flexible output modes including **Full Masking**, **Partial Masking**, and **Entity Labeling**.
+- 📈 **DPDP Risk Scoring**: Automated compliance assessment and risk-level categorization for all discovered entities.
+- 📊 **Executive Dashboard**: Real-time analytics, trend visualization, and comprehensive audit logging.
+- ⚡ **Scalable Architecture**: High-performance FastAPI backend with asynchronous processing via Celery and Redis.
+
+---
+
+## 🏗 System Architecture
+
+The platform follows a modern microservices-inspired monolithic architecture, designed for scalability and maintainability.
+
+- **Frontend**: Single Page Application (SPA) built with React and Vite, utilizing Tailwind CSS for a premium UI/UX.
+- **Backend API**: Asynchronous RESTful API powered by FastAPI.
+- **Task Queue**: Celery with Redis for background ML processing and file handling.
+- **Data Layer**: PostgreSQL for structured metadata and SQLite fallbacks for localized environments.
+- **AI/ML**: Integration with SpaCy, Microsoft Presidio, and custom rule-based scanners.
+
+---
 
 ## 📂 Project Structure
 
 ```text
 dpdp-pii-redaction-platform/
-├── backend/            # FastAPI Backend
+├── backend/            # FastAPI Backend & ML Workers
+│   ├── app/            # Core Application Logic
+│   └── data/           # Metadata Storage (Ignored in Git)
 ├── frontend/           # React + Vite Frontend
-├── infra/              # Docker & K8s config
-├── ai_models/          # ML Model abstractions
-└── data/               # Persistent file storage
+├── infra/              # Deployment Configuration (Docker, K8s)
+├── ai_models/          # ML Model Definitions & Rules
+└── scripts/            # Utility & Automation Scripts
 ```
 
-## 🏁 Quick Start
+---
 
-### 1. Prerequisite
-- Python 3.10+
-- Node.js 18+
-- Docker & Docker Compose
+## 🚀 Deployment Guide
 
-### 2. Running with Docker (Recommended)
+### Prerequisites
+- **Python**: 3.10 or higher
+- **Node.js**: 18.0 or higher
+- **Docker**: Latest stable version with Docker Compose
+
+### Option 1: Docker (Recommended for Production)
+Ensure Docker Desktop is running, then execute:
 ```bash
 docker-compose -f infra/docker/docker-compose.yml up --build
 ```
 
-### 3. Local Manual Setup
-**Backend API:**
-```bash
-cd backend
-# 1. Start Infrastructure (Redis)
-# docker run --name dpdp-redis -p 6379:6379 -d redis
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8002
+### Option 2: Local Development Setup
+The easiest way to start on Windows is using the provided automation script:
+```powershell
+./run_local.bat
 ```
 
-**Celery Worker:**
-```bash
-cd backend
-celery -A app.worker worker --loglevel=info -P solo
-```
+#### Manual Steps:
+1.  **Backend**:
+    ```bash
+    cd backend
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    uvicorn app.main:app --reload --port 8002
+    ```
+2.  **Worker**:
+    ```bash
+    cd backend
+    celery -A app.worker worker --loglevel=info -P solo
+    ```
+3.  **Frontend**:
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
 
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
+---
 
-## 🛡 Security & Compliance
+## 🔒 Security & Privacy
 
-This platform is designed to help organizations comply with the **Digital Personal Data Protection (DPDP) Act, 2023**. 
-- Audit logs for every discovery action.
-- AES-256 encryption for data at rest.
-- Role-Based Access Control (RBAC).
+This project prioritizes data security and user privacy as its core mission.
+- **Zero-Storage Policy**: Original documents can be purged immediately after processing.
+- **Audit Logs**: Every redaction and discovery action is logged with timestamp and user ID.
+- **Isolated Processing**: ML tasks run in isolated worker processes.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## 📄 License
-MIT License - See [LICENSE](LICENSE) for details.
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+© 2024 DPDPShield Team. Professional Privacy Protection.
