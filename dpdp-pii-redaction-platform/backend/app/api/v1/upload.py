@@ -11,7 +11,7 @@ import os
 from sqlalchemy import func
 from app.models.pii_entity import PIIEntity
 from datetime import datetime, timedelta
-import pytz
+from uuid import uuid4
 
 router = APIRouter()
 
@@ -24,7 +24,9 @@ async def upload_file(
     # Ensure upload directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     
-    file_path = os.path.join(settings.UPLOAD_DIR, file.filename)
+    original_name = os.path.basename(file.filename) or "upload"
+    stored_name = f"{uuid4().hex}_{original_name}"
+    file_path = os.path.join(settings.UPLOAD_DIR, stored_name)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
@@ -37,7 +39,8 @@ async def upload_file(
     }
     
     doc = doc_repo.create(db, doc_data)
-    return {"id": doc.id, "filename": doc.filename, "status": doc.status}
+    status_value = getattr(doc.status, "value", doc.status)
+    return {"id": doc.id, "filename": doc.filename, "status": status_value}
 
 @router.get("/stats")
 def get_dashboard_stats(
@@ -119,7 +122,7 @@ def get_documents_paginated(
             {
                 "id": d.id,
                 "filename": d.filename,
-                "status": d.status,
+                "status": getattr(d.status, "value", d.status),
                 "created_at": d.created_at.isoformat() if hasattr(d, 'created_at') and d.created_at else None
             } for d in result["items"]
         ],
@@ -143,7 +146,7 @@ def get_document(
     return {
         "id": doc.id,
         "filename": doc.filename,
-        "status": doc.status,
+        "status": getattr(doc.status, "value", doc.status),
         "created_at": doc.created_at.isoformat() if doc.created_at else None,
         "file_type": doc.file_type,
         "file_size": doc.file_size

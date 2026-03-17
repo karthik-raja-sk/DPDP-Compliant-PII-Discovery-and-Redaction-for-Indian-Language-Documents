@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   Shield, 
@@ -21,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const Settings = () => {
+  const navigate = useNavigate();
   const { user, updateUser } = useAuth();
   const [stats, setStats] = useState(null);
   const [profile, setProfile] = useState({
@@ -197,7 +199,12 @@ const Settings = () => {
                </div>
             </div>
 
-            <Button variant="ghost" className="w-full mt-6 text-accent-400 hover:bg-accent-500/10" icon={ChevronRight} onClick={() => window.location.href = '/upload'}>
+            <Button
+              variant="ghost"
+              className="w-full mt-6 text-accent-400 hover:bg-accent-500/10"
+              icon={ChevronRight}
+              onClick={() => navigate('/upload')}
+            >
               Upgrade for Unlimited Processing
             </Button>
           </Card>

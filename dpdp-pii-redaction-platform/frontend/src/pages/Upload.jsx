@@ -91,7 +91,7 @@ const Upload = () => {
                 const statusMap = {
                   'queued': 'Queued in Engine',
                   'processing': 'Initializing Processor',
-                  'extracting': 'Extracting Document Text',
+                  'extracting text': 'Extracting Document Text',
                   'detecting pii': 'Identifying Sensitive Entities',
                   'saving entities': 'Finalizing Report',
                   'scanned': 'Completed'

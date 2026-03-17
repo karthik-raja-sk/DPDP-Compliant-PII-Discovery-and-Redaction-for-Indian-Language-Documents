@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,7 @@ import Button from '../components/ui/Button';
 // Removed mockEntities completely
 
 const ScanResult = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const docId = searchParams.get('docId');
   const { token } = useAuth();
@@ -261,7 +262,7 @@ const ScanResult = () => {
             </p>
           </Card>
 
-          <Button variant="secondary" className="w-full rounded-2xl py-4 group" icon={HistoryIcon} onClick={() => window.location.href = '/audit-logs'}>
+          <Button variant="secondary" className="w-full rounded-2xl py-4 group" icon={HistoryIcon} onClick={() => navigate('/audit-logs')}>
             View Processing Logs <ExternalLink className="w-3 h-3 ml-1 opacity-40 group-hover:opacity-100 transition-opacity" />
           </Button>
         </div>

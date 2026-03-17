@@ -5,6 +5,7 @@ from app.core.database import SessionLocal
 from app.repositories.document_repository import doc_repo
 from app.repositories.pii_repository import pii_repo
 from app.services.pii_detection_service import pii_detection_service
+from app.models.document import DocumentStatus
 import time
 
 celery_app = Celery(
@@ -26,8 +27,16 @@ celery_app.conf.update(
 
 @celery_app.task(name="scan_document_task")
 def scan_document_task(document_id: int):
+    return scan_document_job(document_id)
+
+
+def scan_document_job(document_id: int):
     """
-    Background job to scan document. Updates DB status so SSE polling can fetch it.
+    Scan a document and persist results.
+
+    This is intentionally a plain function so it can run:
+    - as a Celery task (via `scan_document_task`)
+    - as a FastAPI BackgroundTask fallback when Celery/Redis isn't running
     """
     db = SessionLocal()
     try:
@@ -36,16 +45,17 @@ def scan_document_task(document_id: int):
             return "Document not found"
 
         # Phase 1: Queued -> Processing
-        doc_repo.update_status(db, document_id, "processing")
-        time.sleep(1) # simulate slight delay for UI demonstration
-        
+        doc_repo.update_status(db, document_id, DocumentStatus.PROCESSING)
+        time.sleep(0.2)
+
         # Phase 2: Extracting Text
-        doc_repo.update_status(db, document_id, "extracting")
-        
+        doc_repo.update_status(db, document_id, DocumentStatus.EXTRACTING_TEXT)
+
         text = ""
         try:
             if doc.file_path.lower().endswith(".pdf"):
                 import fitz
+
                 doc_pdf = fitz.open(doc.file_path)
                 text_list = []
                 for page in doc_pdf:
@@ -59,31 +69,28 @@ def scan_document_task(document_id: int):
             # Fallback to pypdf if fitz fails for some reason
             try:
                 import pypdf
+
                 with open(doc.file_path, "rb") as f:
                     reader = pypdf.PdfReader(f)
                     text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            except:
-                doc_repo.update_status(db, document_id, "failed")
+            except Exception:
+                doc_repo.update_status(db, document_id, DocumentStatus.FAILED)
                 return f"Extraction failed: {str(e)}"
 
-        # simulated work
-        time.sleep(1)
-        
         # Phase 3: Detecting
-        doc_repo.update_status(db, document_id, "detecting pii")
+        doc_repo.update_status(db, document_id, DocumentStatus.DETECTING_PII)
         entities = pii_detection_service.scan_text(text)
-        time.sleep(1)
 
         # Phase 4: Saving
-        doc_repo.update_status(db, document_id, "saving entities")
+        doc_repo.update_status(db, document_id, DocumentStatus.SAVING_ENTITIES)
         pii_repo.create_batch(db, document_id, entities)
-        
+
         # Phase 5: Complete
-        doc_repo.update_status(db, document_id, "scanned")
-        
+        doc_repo.update_status(db, document_id, DocumentStatus.SCANNED)
+
         return {"id": doc.id, "entities_found": len(entities)}
     except Exception as e:
-        doc_repo.update_status(db, document_id, "failed")
+        doc_repo.update_status(db, document_id, DocumentStatus.FAILED)
         raise e
     finally:
         db.close()

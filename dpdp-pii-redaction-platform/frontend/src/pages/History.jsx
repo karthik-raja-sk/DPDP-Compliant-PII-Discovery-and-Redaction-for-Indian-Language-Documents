@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   History as HistoryIcon, 
@@ -20,6 +21,7 @@ import { toast } from 'react-hot-toast';
 
 
 const History = () => {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
@@ -144,7 +146,11 @@ const History = () => {
                   </td>
                 </tr>
               ) : logs.map((log) => (
-                <tr key={log.id} className="group hover:bg-white/[0.02] transition-colors cursor-pointer" onClick={() => window.location.href = `/scan-results?docId=${log.id}`}>
+                <tr
+                  key={log.id}
+                  className="group hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  onClick={() => navigate(`/scan-results?docId=${log.id}`)}
+                >
                   <td className="py-5 px-8">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center text-primary-400">

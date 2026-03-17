@@ -6,7 +6,9 @@ from app.repositories.document_repository import doc_repo
 from app.repositories.pii_repository import pii_repo
 from app.services.redaction_service import redaction_service
 from app.core.config import settings
+from app.models.document import DocumentStatus
 import os
+from fastapi import HTTPException
 
 router = APIRouter()
 
@@ -19,7 +21,7 @@ def redact_document(
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
-        return {"error": "Document not found"}
+        raise HTTPException(status_code=404, detail="Document not found")
 
     entities = pii_repo.get_by_document(db, document_id)
     
@@ -40,10 +42,10 @@ def redact_document(
     redaction_service.redact_document_file(doc.file_path, out_path, entity_dicts, mode=mode)
     
     # Typically would save to a new file and return path
-    doc_repo.update_status(db, document_id, "redacted")
+    doc_repo.update_status(db, document_id, DocumentStatus.REDACTED)
     
     return {
         "id": doc.id,
         "mode_applied": mode,
-        "status": "redacted"
+        "status": DocumentStatus.REDACTED.value
     }

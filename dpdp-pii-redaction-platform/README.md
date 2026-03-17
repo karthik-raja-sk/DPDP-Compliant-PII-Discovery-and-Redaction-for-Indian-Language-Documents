@@ -55,10 +55,26 @@ dpdp-pii-redaction-platform/
 - **Docker**: Latest stable version with Docker Compose
 
 ### Option 1: Docker (Recommended for Production)
-Ensure Docker Desktop is running, then execute:
+This runs **Postgres + Redis + FastAPI + Celery worker + Nginx-served frontend**.
+
+Ensure Docker is installed and running, then execute:
 ```bash
-docker-compose -f infra/docker/docker-compose.yml up --build
+docker compose -f infra/docker/docker-compose.yml up -d --build
 ```
+
+Then open:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000` (internally used via `/api` proxy from frontend)
+
+Run database migrations:
+
+```bash
+docker compose -f infra/docker/docker-compose.yml exec backend alembic upgrade head
+```
+
+Notes:
+- The compose stack sets `USE_CELERY=true` so scans run on the Celery worker.
+- Set a strong `SECRET_KEY` in your deployment environment (see `DEPLOYMENT.md`).
 
 ### Option 2: Local Development Setup
 The easiest way to start on Windows is using the provided automation script:
@@ -73,6 +89,8 @@ The easiest way to start on Windows is using the provided automation script:
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
     pip install -r requirements.txt
+    # Dev DB bootstrap (optional) if you are not running Alembic locally yet
+    set AUTO_CREATE_DB=true  # PowerShell: $env:AUTO_CREATE_DB="true"
     uvicorn app.main:app --reload --port 8002
     ```
 2.  **Worker**:
@@ -86,6 +104,13 @@ The easiest way to start on Windows is using the provided automation script:
     npm install
     npm run dev
     ```
+
+Local notes:
+- If you are **not** running Redis/Celery locally, the backend will still scan using a background task (`USE_CELERY=false` by default).
+- Linting is available via `npm run lint` in `frontend/`.
+
+### Production deployment (free tier)
+See `DEPLOYMENT.md` for an Oracle Cloud Always Free VM walkthrough.
 
 ---
 

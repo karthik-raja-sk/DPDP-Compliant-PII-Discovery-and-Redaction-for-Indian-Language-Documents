@@ -14,16 +14,25 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    restart: unless-stopped
 
   backend:
     build: ./backend
-    volumes:
-      - ./backend:/app
-      - ./data:/app/data
-    env_file:
-      - .env
+    restart: unless-stopped
+    environment:
+      # App
+      API_V1_STR: /api/v1
+      PROJECT_NAME: "DPDP PII Redaction Platform"
+      # Secrets (set in real deployments)
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      # Database
+      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/pii_platform
+      # Celery/Redis
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      USE_CELERY: "true"
+      # CORS (adjust to your domain)
+      BACKEND_CORS_ORIGINS: '["http://localhost","http://127.0.0.1"]'
     ports:
       - "8000:8000"
     depends_on:
@@ -32,9 +41,14 @@ services:
 
   celery_worker:
     build: ./backend
-    command: celery -A app.workers.celery_worker worker --loglevel=info
-    volumes:
-      - ./backend:/app
+    restart: unless-stopped
+    command: celery -A app.worker worker --loglevel=info
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/pii_platform
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      USE_CELERY: "true"
     depends_on:
       - redis
       - db
@@ -43,8 +57,9 @@ services:
     build: 
       context: ./frontend
       dockerfile: ../infra/docker/frontend.Dockerfile
+    restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "5173:80"
     depends_on:
       - backend
 

@@ -6,8 +6,11 @@ from app.core.database import get_db
 from app.repositories.document_repository import doc_repo
 from app.repositories.pii_repository import pii_repo
 from app.services.pii_detection_service import pii_detection_service
-from app.worker import scan_document_task
+from app.worker import scan_document_task, scan_document_job
+from app.models.document import DocumentStatus
 import asyncio
+from fastapi import HTTPException
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -20,17 +23,17 @@ async def scan_document(
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
-        return {"error": "Document not found"}
+        raise HTTPException(status_code=404, detail="Document not found")
     
     # Enqueue real Celery Task
-    doc_repo.update_status(db, document_id, "queued")
-    try:
+    doc_repo.update_status(db, document_id, DocumentStatus.QUEUED)
+    if settings.USE_CELERY:
         scan_document_task.delay(document_id)
-    except Exception as e:
-        # Fallback if Redis/Celery is not running in local debug
-        background_tasks.add_task(scan_document_task, document_id)
+    else:
+        # Dev/local fallback when no celery worker is running.
+        background_tasks.add_task(scan_document_job, document_id)
 
-    return {"id": doc.id, "status": "queued"}
+    return {"id": doc.id, "status": DocumentStatus.QUEUED.value}
 
 @router.get("/{document_id}/stream")
 async def scan_stream(
@@ -54,11 +57,12 @@ async def scan_stream(
                 yield {"data": '{"error": "Document not found"}'}
                 break
 
-            yield {"data": f'{{"status": "{doc.status}"}}'}
+            status_value = getattr(doc.status, "value", doc.status)
+            yield {"data": f'{{"status": "{status_value}"}}'}
             
             # End stream on terminal states
-            if doc.status in ["scanned", "redacted", "failed"]:
-                yield {"data": f'{{"status": "{doc.status}"}}'}
+            if status_value in ["scanned", "redacted", "failed"]:
+                yield {"data": f'{{"status": "{status_value}"}}'}
                 break
                 
             await asyncio.sleep(1)
@@ -71,6 +75,9 @@ def get_entities(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+    doc = doc_repo.get_by_id(db, document_id)
+    if not doc or doc.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Document not found")
     entities = pii_repo.get_by_document(db, document_id)
     return [
         {

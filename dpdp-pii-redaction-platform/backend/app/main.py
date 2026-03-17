@@ -3,9 +3,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import auth, upload, scan, redact, health
 from app.core.database import engine, Base
+from sqlalchemy import text
+import os
 
-# Create tables in DEV (In production use Alembic)
-Base.metadata.create_all(bind=engine)
+def _dev_bootstrap_db():
+    """
+    Dev-only bootstrap: create tables if you're not using Alembic yet.
+    Production should run Alembic migrations instead of create_all.
+    """
+    Base.metadata.create_all(bind=engine)
+
+    # Backfill invalid enum values from older versions (SQLite dev DBs may contain them).
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("UPDATE documents SET status = :new_status WHERE status = :old_status"),
+                {"new_status": "extracting text", "old_status": "extracting"},
+            )
+    except Exception:
+        pass
+
+
+if str(getattr(settings, "AUTO_CREATE_DB", os.getenv("AUTO_CREATE_DB", "false"))).lower() == "true":
+    _dev_bootstrap_db()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

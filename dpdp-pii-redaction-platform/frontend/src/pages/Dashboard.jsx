@@ -31,7 +31,7 @@ import Button from '../components/ui/Button';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [documents, setDocuments] = useState([]);
+  const [documents, setDocuments] = useState({ items: [], page: 1, total_pages: 1, total: 0 });
   const [dashboardStats, setDashboardStats] = useState(null);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const Dashboard = () => {
           axios.get('/api/v1/upload/'),
           axios.get('/api/v1/upload/stats')
         ]);
-        setDocuments(docsRes.data);
+        setDocuments(docsRes.data || { items: [] });
         setDashboardStats(statsRes.data);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -58,7 +58,7 @@ const Dashboard = () => {
       toast.success('Document removed');
       setDocuments(prev => ({
         ...prev,
-        items: prev.items.filter(d => d.id !== id)
+        items: (prev.items || []).filter(d => d.id !== id)
       }));
       // Optionally refresh stats
       const statsRes = await axios.get('/api/v1/upload/stats');

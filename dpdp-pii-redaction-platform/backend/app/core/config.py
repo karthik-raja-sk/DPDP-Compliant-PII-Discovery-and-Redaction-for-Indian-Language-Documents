@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     _redis_url = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{int(os.getenv('REDIS_PORT', 6379))}/0"
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "sqla+sqlite:///data/celery_broker.db")
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "db+sqlite:///data/celery_results.db")
+    USE_CELERY: bool = os.getenv("USE_CELERY", "false").lower() == "true"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]

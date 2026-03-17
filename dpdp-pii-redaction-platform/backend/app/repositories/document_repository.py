@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, String, cast
-from app.models.document import Document
+from app.models.document import Document, DocumentStatus
 from typing import List
 
 class DocumentRepository:
@@ -52,13 +52,37 @@ class DocumentRepository:
             "has_prev": page > 1
         }
 
-    def update_status(self, db: Session, doc_id: int, status: str):
+    def update_status(self, db: Session, doc_id: int, status: str | DocumentStatus):
         db_obj = self.get_by_id(db, doc_id)
         if db_obj:
-            db_obj.status = status
+            db_obj.status = self._normalize_status(status)
             db.commit()
             db.refresh(db_obj)
         return db_obj
+
+    def _normalize_status(self, status: str | DocumentStatus) -> DocumentStatus:
+        if isinstance(status, DocumentStatus):
+            return status
+
+        if not status:
+            return DocumentStatus.UPLOADED
+
+        normalized = status.strip().lower()
+
+        # Back-compat aliases from older UI/worker versions.
+        alias_map: dict[str, DocumentStatus] = {
+            "uploaded": DocumentStatus.UPLOADED,
+            "queued": DocumentStatus.QUEUED,
+            "processing": DocumentStatus.PROCESSING,
+            "extracting": DocumentStatus.EXTRACTING_TEXT,
+            "extracting text": DocumentStatus.EXTRACTING_TEXT,
+            "detecting pii": DocumentStatus.DETECTING_PII,
+            "saving entities": DocumentStatus.SAVING_ENTITIES,
+            "scanned": DocumentStatus.SCANNED,
+            "redacted": DocumentStatus.REDACTED,
+            "failed": DocumentStatus.FAILED,
+        }
+        return alias_map.get(normalized, DocumentStatus.PROCESSING)
 
     def delete(self, db: Session, doc_id: int):
         db_obj = self.get_by_id(db, doc_id)
