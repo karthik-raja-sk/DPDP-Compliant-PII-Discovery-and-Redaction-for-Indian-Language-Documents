@@ -16,9 +16,11 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "pii_platform")
-    SQLALCHEMY_DATABASE_URI: Optional[str] = os.getenv(
-        "SQLALCHEMY_DATABASE_URI", 
-        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
+    # Default to SQLite for local/dev portability.
+    # Set SQLALCHEMY_DATABASE_URI to use Postgres in production.
+    SQLALCHEMY_DATABASE_URI: str = os.getenv(
+        "SQLALCHEMY_DATABASE_URI",
+        "sqlite:///./pii_demo.db",
     )
 
     # Redis & Celery (SQLite fallback for local portability)
