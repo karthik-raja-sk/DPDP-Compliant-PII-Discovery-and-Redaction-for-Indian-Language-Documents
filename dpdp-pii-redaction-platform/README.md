@@ -1,141 +1,183 @@
-# DPDPShield: Enterprise PII Discovery & Redaction Platform
+<div align="center">
+  <img src="https://img.shields.io/badge/Status-Production--Ready-success?style=for-the-badge" alt="Status"/>
+  <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"/>
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"/>
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688?style=flat&logo=fastapi)
-![React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat&logo=react)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.5-38B2AC?style=flat&logo=tailwind-css)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)
-
-**DPDPShield** is an AI-powered enterprise privacy intelligence and redaction platform for Indian compliance workflows. Built to automate the discovery, classification, and redaction of Personally Identifiable Information (PII) according to the strict regulatory requirements of **India's Digital Personal Data Protection (DPDP) Act, 2023**.
-
-> **Resume Pitch**: Architected a scalable, end-to-end privacy compliance platform utilizing a modern FastAPI + React/Vite stack. Integrates distributed background processing (Celery/Redis) with real-time SSE progress tracking, ensuring secure, high-fidelity redaction of multi-modal Indian PII data across structured and unstructured documents.
+  <h1>DPDPShield: Enterprise Privacy Intelligence Platform</h1>
+  <p><b>AI-powered PII discovery, risk scoring, and DPDP-compliant redaction platform</b></p>
+</div>
 
 ---
 
-## 🌟 Core Enterprise Features
+## 📖 Overview
 
-*   🔍 **Smart Multi-modal Discovery Engine**: Hybrid detection utilizing intelligent Regex, context-aware rule validation, and NLP analysis to identify Pan Cards, Aadhaar, Voter IDs, UPI, and banking records.
-*   📐 **Real-time Document Risk Scoring**: Algorithmic risk evaluation (0-100) based on PII density, sensitivity weights, and dangerous data combinations.
-*   🛡️ **Dynamic Redaction Policies**: Configurable enforcement with full masking, partial character reveal, and entity labeling across PDFs and raw text.
-*   📊 **Actionable Privacy Intelligence**: A beautiful, premium light-themed **Enterprise Dashboard** providing interactive `Recharts` analytics on system compliance health.
-*   ⚖️ **Comprehensive Audit Ledger**: Permanent, searchable tracking of all data lifecycle events (Uploads, Scans, Purges) with strict RBAC boundary enforcement (Admin, Analyst, Auditor).
-*   🚀 **Asynchronous Processing Pipeline**: Robust background job handling for large document batches using Celery and Redis, complete with live Server-Sent Events (SSE) progress streaming.
+In modern data architectures, protecting Personally Identifiable Information (PII) is no longer optional—it is a critical legal mandate. **DPDPShield** solves the complex challenge of algorithmic data sovereignty for enterprise compliance teams. 
 
----
+Specifically engineered to address the strict regulatory requirements of **India's Digital Personal Data Protection (DPDP) Act, 2023**, this platform leverages zero-shot NLP and heuristic parsing to autonomously discover, score, and redact sensitive Indian data formats (Aadhaar, PAN, UPI) within large document sets. It protects organizational reputation, automates compliance auditing, and completely eliminates the risk of manual PII leaks.
 
-## 📸 Platform Interface
-
-| Dashboard & Analytics | Side-by-Side Forensics |
-| :---: | :---: |
-| ![Dashboard Placeholer](https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600&h=400) | ![Forensics Placeholder](https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=600&h=400) |
-| *Real-time insights and Document Risk Scoring.* | *High-fidelity Redaction & Compliance verification.* |
-
-| Secure Document Gateway | Audit Ledger |
-| :---: | :---: |
-| ![Upload Placeholder](https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=600&h=400) | ![Ledger Placeholder](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=600&h=400) |
-| *Drag-and-drop secure upload pipeline.* | *Searchable, immutable compliance history.* |
+### Why This Project Matters
+With data breaches incurring massive regulatory fines, organizations cannot rely on manual auditors to redact sensitive information. DPDPShield proves how modern software architecture can cleanly decouple a user-facing Web Server from heavy Machine Learning inferences—guaranteeing strict privacy compliance without crashing production systems under load. 
 
 ---
 
-## 🏗️ System Architecture
+## ⚡ Key Engineering Highlights
 
-DPDPShield employs a modern, decoupled microservices-inspired architecture optimized for scalability and isolation of computational workloads.
-
-*   **Frontend**: React 18 SPA via Vite, styled with Tailwind CSS (Premium Indigo/Slate Design System).
-*   **API Gateway & Core**: Asynchronous RESTful API powered by FastAPI & Uvicorn.
-*   **Background Workers**: Celery distributed task queue backed by Redis, isolating intensive ML extraction processes.
-*   **Data Persistence**: SQLAlchemy ORM compatible with PostgreSQL (defaulting to SQLite for rapid local dev).
-*   **Orchestration**: Fully containerized using `docker-compose` for reproducible production builds.
+- **Asynchronous Task Parallelization:** Engineered an event-driven Redis/Celery queue to entirely offload heavy PyMuPDF parsing from the primary FastAPI event loop, ensuring horizontal scalability.
+- **Zero-Trust Access Control:** Enforced immutable Role-Based Access Control (RBAC) via cryptographically verified JWT dependency injection routing.
+- **Real-Time Data Streaming:** Bypassed traditional long-polling by streaming continuous progression telemetry via Server-Sent Events (SSE) directly to the React Virtual DOM.
+- **Zero-Shot NLP Intelligence:** Integrated Microsoft Presidio’s deterministic/stochastic ML recognition matrix to dynamically score semantic contextual privacy risks.
 
 ---
 
-## ⚙️ Environment Configuration
+## ✨ Enterprise Features
 
-Define these variables in `.env` within the `backend/` directory or inject them via your CI/CD pipeline:
-
-```env
-# Security Core
-SECRET_KEY="generate-a-strong-256-bit-secret-key-here"
-ENVIRONMENT="production" # or "development"
-
-# Database Configuration (Postgres/SQLite)
-SQLALCHEMY_DATABASE_URI="sqlite:///./data/pii_demo.db" 
-
-# Background Worker Configuration
-USE_CELERY=true
-CELERY_BROKER_URL="redis://redis:6379/0"
-CELERY_RESULT_BACKEND="redis://redis:6379/0"
-```
+*   **Intelligent PII Detection (Indian Context):** Hybrid detection engine combining Microsoft Presidio zero-shot NLP with localized deterministic models to accurately isolate Aadhaar, PAN, and UPI identifiers.
+*   **Dynamic Risk Scoring:** Algorithmic calculation of document vulnerability (0-100) based on contextual sensitivity density, penalizing unencrypted high-variance data.
+*   **Policy-Based Redaction:** Cryptographic orchestration allowing users to execute structural masking, partial character hashing (e.g., `XXXX-XXXX-1234`), or categorical entity aliasing.
+*   **Async Processing (Celery + Redis):** Enterprise-grade background task queue designed to parallelize heavy PyMuPDF extraction jobs without blocking the main event gateway.
+*   **Zero-Trust RBAC Security:** Strict JSON Web Token (JWT) compliance enforcing segregation of duties across Administrator, Analyst, and Auditor boundary paths.
+*   **Immutable Audit & Compliance Dashboard:** Cryptographically isolated ledger tracing every file upload, redaction policy, and permanent deletion action.
+*   **Side-by-Side Forensics Alignment:** High-fidelity UI comparison viewer mapping the original uploaded document against the mathematically redacted output.
+*   **Real-Time Progress Telemetry:** Server-Sent Events (SSE) streaming live inference progression metrics directly to the React Virtual DOM without polling.
 
 ---
 
-## 🚀 Setup & Deployment Guide
+## 🏗️ System Architecture Flow
 
-DPDPShield is Docker-native. The entire platform (Frontend + Backend + Celery Worker + Redis) can be spun up seamlessly.
+DPDPShield relies on a decoupled, containerized microservices architecture to ensure high availability and inference scale:
 
-### 1. Production Docker Orchestration (Recommended)
+1. **Client Gateway (React/Tailwind):** The Analyst securely uploads a document via the SPA. The React client immediately establishes a persistent SSE connection.
+2. **API Manager (FastAPI):** The Uvicorn standard routes the request, writes the payload to an algorithmic filesystem vault, and dispatches a lightweight message to the memory broker.
+3. **Message Broker (Redis):** Orchestrates the high-throughput task queue, storing immediate trajectory state without touching the primary relational database.
+4. **Targeted Subsystem Fleet (Celery):** Isolated background processes fetch the job, execute the PyMuPDF/Microsoft Presidio intelligence engine natively, securely push Redaction coordinates, and commit the final cryptographic signature to the Immutable Audit Ledger (SQLite/Postgres).
 
-1.  Clone the repository and configure your `.env` variables.
-2.  Deploy the entire stack using Docker Compose:
+---
 
+## 🖥️ Platform Showcase
+
+*(Replace placeholders below with actual production screenshots)*
+
+### 1. Enterprise Dashboard
+![Dashboard Screenshot Placeholder](https://placehold.co/800x400/1e293b/ffffff?text=Enterprise+Analytics+Dashboard)
+*Real-time compliance telemetry, PII distribution charts, and DPDP risk indexing.*
+
+### 2. Document Extraction Gateway
+![Upload Screenshot Placeholder](https://placehold.co/800x400/1e293b/ffffff?text=Secure+Upload+%26+Scan+Gateway)
+*Drag-and-drop secure upload with live SSE trajectory tracking.*
+
+### 3. Forensic Policy Masking
+![Scan Result Placeholder](https://placehold.co/800x400/1e293b/ffffff?text=Side-by-Side+Redaction+Forensics)
+*Side-by-side risk visualization with granular redaction mode selection.*
+
+### 4. Immutable Audit Ledger
+![Audit History Placeholder](https://placehold.co/800x400/1e293b/ffffff?text=Immutable+Audit+Ledger)
+*Cryptographic ledger documenting all Analyst processing operations.*
+
+---
+
+## 🚀 Installation & Setup
+
+### Requirements
+*   Python 3.10+
+*   Node.js 18+
+*   Redis server (runs natively or via Docker)
+
+### 1. Clone the Repository
 ```bash
-docker-compose up -d --build
+git clone https://github.com/yourusername/DPDP-Compliant-PII-Discovery-and-Redaction-for-Indian-Language-Documents.git
+cd dpdp-pii-redaction-platform
 ```
 
-3.  Access the platform:
-    *   **Frontend UI**: `http://localhost` (Served via Nginx)
-    *   **Backend API Docs**: `http://localhost:8000/docs` (Swagger UI)
-
-### 2. Local Development (Manual Setup)
-
-**Backend Setup:**
+### 2. Backend & Worker Initialization
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Or `venv\Scripts\activate` on Windows
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+python -m spacy download en_core_web_sm
 
-**Celery Worker Setup (In a separate terminal):**
-```bash
-cd backend
-source venv/bin/activate
+# Start the Redis server (ensure port 6379 is open)
+redis-server
+
+# Run the FastAPI Web Server
+uvicorn app.main:app --reload --port 8000
+
+# Run the Celery Worker (In a separate terminal)
 celery -A app.worker.celery_app worker --loglevel=info
 ```
 
-**Frontend Setup:**
+### 3. Frontend Initialization
 ```bash
 cd frontend
 npm install
 npm run dev
+# The React dashboard will be available at http://localhost:5173
 ```
 
 ---
 
-## 📡 API Overview
+## 🔐 Environment Variables
 
-The platform exposes a comprehensive, RBAC-protected RESTful API documented via OpenAPI.
+Create a strict `.env` inside the `backend/` directory explicitly omitting secrets from version control:
 
-| Endpoint | Method | Role | Description |
+```env
+# backend/.env 
+SECRET_KEY=generate_a_secure_random_key_here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+DATABASE_URL=sqlite:///./data/pii_platform.db
+REDIS_URL=redis://localhost:6379/0
+API_V1_STR=/api/v1
+```
+
+---
+
+## 🔌 API Boundaries
+
+| Endpoint | Method | Role Requirement | Purpose |
 | :--- | :--- | :--- | :--- |
-| `/api/v1/auth/login` | `POST` | Public | Authenticates user and issues JWT. |
-| `/api/v1/upload/` | `POST` | Analyst, Admin | Intakes raw documents into the secure local vault. |
-| `/api/v1/scan/{id}` | `POST` | Analyst, Admin | Enqueues the document into the Celery processing pipeline. |
-| `/api/v1/scan/{id}/stream` | `GET` | Analyst, Admin | SSE endpoint pushing real-time scan progress updates. |
-| `/api/v1/document/{id}/redact` | `POST` | Analyst, Admin | Applies selected redaction policies to the source text. |
-| `/api/v1/scan/{id}/report` | `GET` | All | Generates a DPDP Risk Assessment Report (JSON). |
-| `/api/v1/audit/` | `GET` | Auditor, Admin | Retrieves the immutable compliance ledger. |
+| `/api/v1/upload/` | `POST` | `Admin`, `Analyst` | Ingests PDF securely into the processing pipeline. |
+| `/api/v1/scan/{id}/stream` | `GET` | `Admin`, `Analyst` | Connects an SSE stream for live background tracking. |
+| `/api/v1/redact/{id}` | `POST` | `Admin`, `Analyst` | Executes the mathematical redaction policy on the object. |
+| `/api/v1/scan/{id}/report` | `GET` | `Admin`, `Analyst`, `Auditor` | Generates a granular risk compliance report. |
+| `/api/v1/audit/` | `GET` | `Admin`, `Auditor` | Returns the immutable cryptographic system ledger. |
 
 ---
 
-## 🔮 Future Scope & Roadmap
+## 🚢 Deployment Strategies
 
-*   **Cloud Object Storage**: Migration from local filesystem vault to AWS S3 / Azure Blob Storage.
-*   **Webhooks**: Integration engine to fire webhooks upon critical risk detection (score > 90).
-*   **Expanded NER Models**: Fine-tuning regional LLMs (e.g., Sarvam AI) for deeper contextual Indian language understanding.
-*   **Kubernetes Helm Charts**: Transitioning from `docker-compose` to fully distributed K8s deployments for auto-scaling worker nodes.
+### Local Orchestration (Docker Compose)
+The repository is fully Docker-ready for immediate orchestration across all operating systems.
+```bash
+docker-compose up -d --build
+```
+*This launches Nginx, the UI, FastAPI, Redis, and Celery identically to a production environment.*
+
+### Cloud Production Notes
+*   **Stateless Scaling:** Swap the SQLite volume for an AWS RDS PostgreSQL instance and target an ElastiCache Redis broker to scale Celery workers via Kubernetes HPA.
+*   **Blob Storage:** Update `upload.py` to route local `/data/` streams directly to AWS S3 buckets to prevent disk bloat on the web tier.
 
 ---
-*Architected for strict compliance. Engineered for scale.* 
-**© 2026 DPDPShield Team.**
+
+## 🛠️ Technology Stack
+
+*   **Backend:** FastAPI, SQLAlchemy, Pydantic, Uvicorn
+*   **Infrastructure:** Celery, Redis, Docker, Nginx
+*   **Frontend:** React 18, Tailwind CSS, Recharts, Vite
+*   **Machine Learning/NLP:** Microsoft Presidio Analyzer, SpaCy, PyMuPDF (fitz)
+
+---
+
+## 🔮 Future Evolutions
+
+*   **Multilingual Indian NLP:** Implement HuggingFace models (e.g., IndicBERT) to detect PII accurately inside Hindi, Tamil, and Bengali regional texts.
+*   **Advanced OCR Capabilities:** Integrate Tesseract to identify PII within scanned image-based PDFs, not just natively structured text.
+*   **Cloud Object Sovereignty:** Deploy to AWS/Azure using dedicated GovCloud boundaries to ensure strict inter-region data compliance.
+*   **Global Compliance Frameworks:** Extend the tagging matrix to isolate GDPR (EU) and CCPA (California) boundary entities dynamically.
+
+---
+
+## 📄 License
+
+This system architecture is open-sourced under the MIT License. See `LICENSE` for further operational agreements.
