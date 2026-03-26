@@ -7,6 +7,7 @@ from app.repositories.pii_repository import pii_repo
 from app.services.pii_detection_service import pii_detection_service
 from app.models.document import DocumentStatus
 import time
+from loguru import logger
 
 celery_app = Celery(
     "worker",
@@ -79,17 +80,21 @@ def scan_document_job(document_id: int):
 
         # Phase 3: Detecting
         doc_repo.update_status(db, document_id, DocumentStatus.DETECTING_PII)
-        entities = pii_detection_service.scan_text(text)
+        result = pii_detection_service.scan_text(text)
+        entities = result["entities"]
+        compliance_score = result["compliance_score"]
 
         # Phase 4: Saving
         doc_repo.update_status(db, document_id, DocumentStatus.SAVING_ENTITIES)
         pii_repo.create_batch(db, document_id, entities)
+        doc_repo.update_compliance_score(db, document_id, compliance_score)
 
         # Phase 5: Complete
         doc_repo.update_status(db, document_id, DocumentStatus.SCANNED)
 
-        return {"id": doc.id, "entities_found": len(entities)}
+        return {"id": doc.id, "entities_found": len(entities), "compliance_score": compliance_score}
     except Exception as e:
+        logger.error(f"Critical error during document scan for ID {document_id}: {str(e)}")
         doc_repo.update_status(db, document_id, DocumentStatus.FAILED)
         raise e
     finally:

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - USE_CELERY=true
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SQLALCHEMY_DATABASE_URI=sqlite:///./data/pii_demo.db
+      - ENVIRONMENT=production
+    depends_on:
+      - redis
+
+  worker:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - USE_CELERY=true
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SQLALCHEMY_DATABASE_URI=sqlite:///./data/pii_demo.db
+      - ENVIRONMENT=production
+    depends_on:
+      - redis
+      - backend
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"

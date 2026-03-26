@@ -24,6 +24,9 @@ class OAuth2PasswordBearerWithQuery(OAuth2PasswordBearer):
 
 oauth2_scheme = OAuth2PasswordBearerWithQuery(tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False)
 
+from typing import List
+from app.models.user import UserRole
+
 def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> User:
@@ -37,12 +40,25 @@ def get_current_user(
             token, settings.SECRET_KEY, algorithms=["HS256"]
         )
         email: str = payload.get("sub")
+        role: str = payload.get("role")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = TokenData(email=email, role=role)
     except JWTError:
         raise credentials_exception
     user = user_repo.get_by_email(db, email=token_data.email)
     if user is None:
         raise credentials_exception
     return user
+
+class CheckerRole:
+    def __init__(self, allowed_roles: List[UserRole]):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: User = Depends(get_current_user)):
+        if user.role not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have enough permissions to access this resource"
+            )
+        return user

@@ -125,14 +125,15 @@ const Upload = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 py-10 animate-in">
+    <div className="max-w-6xl mx-auto space-y-12 py-10 animate-in font-sans">
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-[10px] font-black uppercase tracking-widest mb-4">
-          <ShieldCheck className="w-3.5 h-3.5" /> Secure Discovery Core
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-bold uppercase tracking-widest mb-2 italic">
+          <ShieldCheck className="w-4 h-4" /> Enterprise Compliance Core
         </div>
-        <h1 className="text-5xl font-black text-white tracking-tight">Detect PII in Documents</h1>
+        <h1 className="text-5xl font-bold text-slate-900 tracking-tight">Detect PII in Documents</h1>
         <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium">
-          Upload PDFs, images, or raw text to identify Aadhaar, PAN, and other sensitive entities under the DPDP framework.
+          Upload PDFs, images, or raw text to identify sensitive entities <br /> 
+          <span className="text-indigo-600 font-bold">under the DPDP framework.</span>
         </p>
       </div>
 
@@ -140,32 +141,34 @@ const Upload = () => {
         {/* Upload Column */}
         <div className="lg:col-span-7 space-y-8">
           <div 
-            className={`relative min-h-[400px] border-2 border-dashed rounded-[40px] flex flex-col items-center justify-center transition-all duration-500 group overflow-hidden ${
+            className={`relative min-h-[420px] border-2 border-dashed rounded-[48px] flex flex-col items-center justify-center transition-all duration-500 group overflow-hidden ${
               dragActive 
-              ? 'border-primary-500 bg-primary-500/5 ring-8 ring-primary-500/10' 
-              : 'border-white/5 bg-slate-900/40 hover:border-white/10'
+              ? 'border-indigo-500 bg-indigo-50/50 ring-8 ring-indigo-500/5' 
+              : 'border-slate-200 bg-white hover:border-slate-300 shadow-sm'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {/* Animated Grid Background */}
-            <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity"></div>
+            {/* Subtle Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-24 h-24 bg-slate-900 rounded-[30px] border border-white/5 flex items-center justify-center mb-8 shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                <UploadIcon className="w-10 h-10 text-primary-500" />
+              <div className="w-24 h-24 bg-white rounded-[32px] border border-slate-100 flex items-center justify-center mb-8 shadow-xl shadow-slate-200/50 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
+                <UploadIcon className="w-10 h-10 text-indigo-600" />
               </div>
-              <p className="text-2xl font-black text-white text-center">
+              <p className="text-2xl font-bold text-slate-800 text-center tracking-tight">
                 Drag and drop your files <br /> 
-                <span className="text-slate-500 font-medium">to initialize scanning</span>
+                <span className="text-slate-400 font-medium text-lg">to initialize scanning engine</span>
               </p>
-              <div className="flex items-center gap-4 mt-8">
-                <div className="h-px w-8 bg-white/5" />
-                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">or</p>
-                <div className="h-px w-8 bg-white/5" />
+              
+              <div className="flex items-center gap-4 mt-8 mb-8">
+                <div className="h-px w-8 bg-slate-100" />
+                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">secure gateway</p>
+                <div className="h-px w-8 bg-slate-100" />
               </div>
+
               <input 
                 ref={inputRef}
                 type="file" 
@@ -173,73 +176,75 @@ const Upload = () => {
                 onChange={handleFileChange}
                 className="hidden" 
               />
-              <Button 
-                variant="secondary" 
-                size="lg" 
-                className="mt-8 rounded-2xl" 
+              <button 
+                className="px-8 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
                 onClick={() => inputRef.current.click()}
               >
                 Browse File System
-              </Button>
+              </button>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-6">
             {[
-              { title: 'Secure OCR', icon: Type, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-              { title: 'Hindi/Tamil', icon: Globe, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-              { title: 'DPDP-Ready', icon: Lock, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+              { title: 'Secure OCR', icon: Type, color: 'text-indigo-600', bg: 'bg-indigo-50', desc: 'Text Extraction' },
+              { title: 'Multilingual', icon: Globe, color: 'text-amber-600', bg: 'bg-amber-50', desc: 'Regional Support' },
+              { title: 'DPDP-Ready', icon: Lock, color: 'text-emerald-600', bg: 'bg-emerald-50', desc: 'Legal Compliance' },
             ].map((feat, i) => (
-              <Card key={i} className="p-5 text-center group">
-                <div className={`w-10 h-10 mx-auto rounded-xl ${feat.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <feat.icon className={`w-5 h-5 ${feat.color}`} />
+              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-center group hover:shadow-md transition-shadow">
+                <div className={`w-12 h-12 mx-auto rounded-2xl ${feat.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <feat.icon className={`w-6 h-6 ${feat.color}`} />
                 </div>
-                <p className="text-xs font-bold text-slate-300">{feat.title}</p>
-              </Card>
+                <p className="text-xs font-bold text-slate-800 mb-1">{feat.title}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{feat.desc}</p>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Queued Files Column */}
         <div className="lg:col-span-5">
-          <Card className="h-full flex flex-col p-8 overflow-hidden">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400">
-                  <Files className="w-5 h-5" />
+          <div className="bg-white h-full flex flex-col p-10 rounded-[48px] border border-slate-100 shadow-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -mr-10 -mt-10" />
+            
+            <div className="flex items-center justify-between mb-10 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
+                  <Files className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Queue</h3>
+                <h3 className="text-2xl font-bold text-slate-800">Queue</h3>
               </div>
               {files.length > 0 && (
-                <span className="text-xs font-black text-primary-400 bg-primary-500/10 px-3 py-1 rounded-full uppercase tracking-widest">
-                  {files.length} Managed
+                <span className="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                  {files.length} Total
                 </span>
               )}
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+            <div className="flex-1 space-y-4 overflow-y-auto max-h-[380px] pr-2 custom-scrollbar relative z-10">
               {files.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-10 opacity-40">
-                  <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-white/5">
-                    <File className="w-8 h-8 text-slate-500" />
+                <div className="h-full flex flex-col items-center justify-center text-center p-10 opacity-60 mt-10">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 border border-slate-100">
+                    <File className="w-10 h-10 text-slate-300" />
                   </div>
-                  <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No documents queued</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No documents queued</p>
+                  <p className="text-[10px] text-slate-300 font-medium mt-2">Add files to begin analysis pipeline</p>
                 </div>
               ) : (
                 files.map((file, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5 group hover:border-primary-500/30 transition-all">
+                  <div key={i} className="flex items-center justify-between bg-slate-50/50 p-4 rounded-2xl border border-slate-100 group hover:border-indigo-200 hover:bg-indigo-50/30 transition-all shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-900 border border-white/5 rounded-xl flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-black text-primary-500 uppercase">{file.name.split('.').pop()}</span>
+                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex flex-col items-center justify-center shadow-sm">
+                        <span className="text-[10px] font-bold text-indigo-600 uppercase italic">{file.name.split('.').pop()}</span>
                       </div>
-                      <div className="max-w-[150px]">
-                        <p className="text-sm font-bold text-slate-200 truncate uppercase tracking-tight">{file.name}</p>
-                        <p className="text-[10px] text-slate-500 font-bold">{(file.size / 1024 / 1024).toFixed(2)} MB • READY</p>
+                      <div className="max-w-[180px]">
+                        <p className="text-sm font-bold text-slate-700 truncate">{file.name}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{(file.size / 1024 / 1024).toFixed(2)} MB • READY</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => removeFile(i)}
-                      className="w-8 h-8 flex items-center justify-center text-slate-600 hover:text-danger-500 hover:bg-danger-500/10 rounded-lg transition-all"
+                      className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -248,37 +253,46 @@ const Upload = () => {
               )}
             </div>
 
-              <div className="pt-8 mt-8 border-t border-white/5 space-y-4">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center px-1">
-                    <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest animate-pulse">
-                      {scanStatus || 'Initializing Engine...'}
-                    </span>
-                    <span className="text-[10px] font-black text-slate-500">
-                      {scanning ? 'SECURE_CHANNEL_ACTIVE' : ''}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
-                    <div 
-                      className="h-full bg-primary-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(14,165,233,0.5)]" 
-                      style={{ width: scanning ? '100%' : '0%' }}
-                    />
-                  </div>
+            <div className="pt-10 mt-10 border-t border-slate-50 space-y-6 relative z-10">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest italic animate-pulse">
+                    {scanStatus || 'Initializing Core Engine...'}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1.5">
+                    {scanning && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />}
+                    {scanning ? 'LINK_ESTABLISHED' : ''}
+                  </span>
                 </div>
-                <Button 
-                  className="w-full rounded-[20px] py-5 shadow-2xl shadow-primary-500/20" 
-                  size="lg"
-                  loading={scanning}
-                  onClick={startScan}
-                  icon={scanning ? null : ArrowRight}
-                >
-                  {scanning ? 'Processing Documents...' : 'Initialize Analysis Pipeline'}
-                </Button>
-                <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em] mt-2">
-                  Secured by AES-256 Encryption
-                </p>
+                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-indigo-600 rounded-full transition-all duration-1000 origin-left" 
+                    style={{ width: scanning ? '100%' : '0%' }}
+                  />
+                </div>
               </div>
-          </Card>
+              
+              <button 
+                disabled={files.length === 0 || scanning}
+                onClick={startScan}
+                className="w-full bg-indigo-600 text-white rounded-[24px] py-5 font-bold text-sm shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:pointer-events-none group"
+              >
+                {scanning ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>Initialise Analysis Pipeline <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                )}
+              </button>
+              
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
+                  End-to-End SSL Encryption
+                </p>
+                <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

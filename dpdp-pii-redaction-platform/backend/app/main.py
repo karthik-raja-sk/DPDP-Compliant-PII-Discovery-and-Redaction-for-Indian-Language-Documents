@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import auth, upload, scan, redact, health
+from app.api.v1 import auth, upload, scan, redact, health, audit
 from app.core.database import engine, Base
 from sqlalchemy import text
 import os
@@ -47,6 +47,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Aut
 app.include_router(upload.router, prefix=f"{settings.API_V1_STR}/upload", tags=["Upload"])
 app.include_router(scan.router, prefix=f"{settings.API_V1_STR}/scan", tags=["Scanning"])
 app.include_router(redact.router, prefix=f"{settings.API_V1_STR}/redact", tags=["Redaction"])
+app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["Audit"])
 app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["Health"])
 
 @app.get("/")

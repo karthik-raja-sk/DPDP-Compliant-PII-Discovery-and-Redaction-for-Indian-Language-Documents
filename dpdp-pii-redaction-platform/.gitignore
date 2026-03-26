@@ -166,11 +166,12 @@ yarn-error.log*
 Thumbs.db
 
 # Project specific
-dpdp-pii-redaction-platform/backend/data/*.db
-dpdp-pii-redaction-platform/backend/data/raw/*
-dpdp-pii-redaction-platform/backend/data/processed/*
-dpdp-pii-redaction-platform/backend/data/redacted_outputs/*
-dpdp-pii-redaction-platform/backend/*.log
-dpdp-pii-redaction-platform/frontend/dist/
-dpdp-pii-redaction-platform/frontend/.env
-dpdp-pii-redaction-platform/backend/.env
+backend/data/*.db
+backend/data/raw/*
+backend/data/processed/*
+backend/data/redacted_outputs/*
+backend/*.log
+frontend/dist/
+frontend/.env
+backend/.env
+backend/pii_demo.db

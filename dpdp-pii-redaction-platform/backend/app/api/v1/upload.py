@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from app.api.deps import get_current_user
-from app.core.database import get_db
-from app.models.user import User
+from app.api.deps import get_current_user, CheckerRole
+from app.models.user import User, UserRole
 from app.repositories.document_repository import doc_repo
 from app.core.config import settings
 import shutil
@@ -13,13 +12,13 @@ from app.models.pii_entity import PIIEntity
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-router = APIRouter()
+from app.services.audit_service import audit_service
 
 @router.post("/")
 async def upload_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     # Ensure upload directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
@@ -39,13 +38,14 @@ async def upload_file(
     }
     
     doc = doc_repo.create(db, doc_data)
+    audit_service.log_action(db, user_id=current_user.id, action="UPLOAD", resource_type="DOCUMENT", resource_id=str(doc.id), details={"filename": doc.filename})
     status_value = getattr(doc.status, "value", doc.status)
     return {"id": doc.id, "filename": doc.filename, "status": status_value}
 
 @router.get("/stats")
 def get_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     from app.models.document import Document
     
@@ -106,7 +106,7 @@ def get_documents_paginated(
     search: str = None,
     status_filter: str = "All",
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     result = doc_repo.get_by_user_paginated(
         db=db,
@@ -138,7 +138,7 @@ def get_documents_paginated(
 def get_document(
     document_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST, UserRole.AUDITOR]))
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
@@ -157,7 +157,7 @@ def get_original_file(
     document_id: int,
     download: bool = False,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
@@ -166,6 +166,7 @@ def get_original_file(
     if not os.path.exists(doc.file_path):
         raise HTTPException(status_code=404, detail="File not found on server")
         
+    audit_service.log_action(db, user_id=current_user.id, action="DOWNLOAD_ORIGINAL", resource_type="DOCUMENT", resource_id=str(doc.id))
     return FileResponse(
         doc.file_path, 
         media_type=doc.file_type, 
@@ -177,7 +178,7 @@ def get_redacted_file(
     document_id: int,
     download: bool = False,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
@@ -192,7 +193,8 @@ def get_redacted_file(
             media_type=doc.file_type, 
             filename=doc.filename if download else None
         )
-        
+    
+    audit_service.log_action(db, user_id=current_user.id, action="DOWNLOAD_REDACTED", resource_type="DOCUMENT", resource_id=str(doc.id))
     return FileResponse(
         redacted_path, 
         media_type=doc.file_type, 
@@ -202,16 +204,17 @@ def get_redacted_file(
 @router.delete("/")
 def purge_documents(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     count = doc_repo.delete_all_by_user(db, current_user.id)
+    audit_service.log_action(db, user_id=current_user.id, action="PURGE_ALL", resource_type="DOCUMENT", details={"count": count})
     return {"message": f"Successfully purged {count} documents and related entities"}
 
 @router.delete("/{document_id}")
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(CheckerRole([UserRole.ADMIN, UserRole.ANALYST]))
 ):
     doc = doc_repo.get_by_id(db, document_id)
     if not doc or doc.user_id != current_user.id:
@@ -225,4 +228,5 @@ def delete_document(
             pass
             
     doc_repo.delete(db, document_id)
+    audit_service.log_action(db, user_id=current_user.id, action="DELETE", resource_type="DOCUMENT", resource_id=str(document_id))
     return {"message": "Document deleted successfully"}

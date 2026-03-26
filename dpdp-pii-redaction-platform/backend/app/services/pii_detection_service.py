@@ -9,7 +9,7 @@ class PIIDetectionService:
     def __init__(self):
         self.regex_detector = RegexDetector()
 
-    def scan_text(self, text: str, language: str = "en") -> list:
+    def scan_text(self, text: str, language: str = "en") -> dict:
         # Hybrid detection
         regex_entities = self.regex_detector.detect(text)
         ner_entities = ner_inference.detect(text, language=language)
@@ -20,12 +20,26 @@ class PIIDetectionService:
         for entity in refined_entities:
             entity['risk_level'] = scorer.calculate_risk(entity['entity_type'], entity['confidence'])
             
-        return refined_entities
+        compliance_score = scorer.aggregate_score(refined_entities)
+        impact_analysis = scorer.get_impact_analysis(refined_entities)
+        
+        return {
+            "entities": refined_entities,
+            "compliance_score": compliance_score,
+            "impact_analysis": impact_analysis
+        }
 
     async def process_document(self, db: Session, doc_id: int, text: str):
-        entities = self.scan_text(text)
+        result = self.scan_text(text)
+        entities = result["entities"]
+        
         # Store in DB using the repository
         pii_repo.create_batch(db, doc_id, entities)
-        return entities
+        
+        # Update document compliance score
+        from app.repositories.document_repository import doc_repo
+        doc_repo.update_compliance_score(db, doc_id, result["compliance_score"])
+        
+        return result
 
 pii_detection_service = PIIDetectionService()

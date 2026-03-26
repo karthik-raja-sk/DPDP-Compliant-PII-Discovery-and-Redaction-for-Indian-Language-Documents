@@ -9,12 +9,16 @@ from app.api.deps import get_current_user
 
 router = APIRouter()
 
+from app.services.audit_service import audit_service
+
 @router.post("/register", response_model=User)
 def register(obj_in: UserCreate, db: Session = Depends(get_db)):
     user = user_repo.get_by_email(db, email=obj_in.email)
     if user:
         raise HTTPException(status_code=400, detail="User already exists")
-    return user_repo.create(db, obj_in=obj_in)
+    new_user = user_repo.create(db, obj_in=obj_in)
+    audit_service.log_action(db, user_id=new_user.id, action="REGISTER", resource_type="USER", resource_id=str(new_user.id))
+    return new_user
 
 @router.post("/login", response_model=Token)
 def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
@@ -22,7 +26,8 @@ def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = 
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     
-    access_token = create_access_token(subject=user.email)
+    audit_service.log_action(db, user_id=user.id, action="LOGIN", resource_type="USER", resource_id=str(user.id))
+    access_token = create_access_token(subject=user.email, role=user.role.value)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=User)

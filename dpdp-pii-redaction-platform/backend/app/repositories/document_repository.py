@@ -60,6 +60,14 @@ class DocumentRepository:
             db.refresh(db_obj)
         return db_obj
 
+    def update_compliance_score(self, db: Session, doc_id: int, score: float):
+        db_obj = self.get_by_id(db, doc_id)
+        if db_obj:
+            db_obj.compliance_score = score
+            db.commit()
+            db.refresh(db_obj)
+        return db_obj
+
     def _normalize_status(self, status: str | DocumentStatus) -> DocumentStatus:
         if isinstance(status, DocumentStatus):
             return status

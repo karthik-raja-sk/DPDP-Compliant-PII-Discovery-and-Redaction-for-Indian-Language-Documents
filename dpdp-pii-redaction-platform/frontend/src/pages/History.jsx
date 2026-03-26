@@ -59,7 +59,7 @@ const History = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "audit_logs_page.csv");
+    link.setAttribute("download", `audit_report_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -67,132 +67,129 @@ const History = () => {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this audit record?')) return;
+    if (!window.confirm('Purge this record from the immutable audit trail?')) return;
     try {
       await axios.delete(`/api/v1/upload/${id}`);
-      toast.success('Record purged');
+      toast.success('Record purged successfully');
       setLogs(logs.filter(l => l.id !== id));
       setTotalCount(prev => prev - 1);
     } catch (err) {
-      toast.error('Failed to delete record');
+      toast.error('Failed to purge record');
     }
   };
 
   return (
-    <div className="space-y-10 animate-in">
+    <div className="space-y-8 animate-in font-sans pb-10">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">Audit History</h1>
-          <p className="text-slate-500 mt-2 font-medium">Traceable logs of all document discoveries and redaction events.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Immutable Audit Ledger</h1>
+          <p className="text-slate-500 mt-1 font-medium italic">Cryptographically isolated ledger of all discovery and redaction operations.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" icon={Download} onClick={exportCSV}>Export Logs (CSV)</Button>
+          <button 
+             onClick={exportCSV}
+             className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+          >
+            <Download className="w-4 h-4" /> Export Report
+          </button>
         </div>
       </header>
 
       {/* Filters Bar */}
-      <Card className="p-4 bg-slate-900/40 border-white/5 flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-1 w-full group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
           <input 
             type="text" 
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search by filename or ID..." 
-            className="w-full bg-slate-950/60 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-medium"
+            placeholder="Search documents by name or ID..." 
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all font-medium"
           />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 border border-white/5 rounded-xl text-xs font-black text-slate-400 hover:text-white transition-colors uppercase tracking-widest">
-            <Filter className="w-3.5 h-3.5" /> Filter
-          </button>
-          <div className="h-10 w-px bg-white/5 mx-2 hidden md:block" />
           <select 
             value={filter}
             onChange={(e) => { setFilter(e.target.value); setPage(1); }}
-            className="flex-1 md:flex-none bg-slate-900 border border-white/5 rounded-xl px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+            className="flex-1 md:flex-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all cursor-pointer outline-none"
           >
-            <option value="All">All Statuses</option>
-            <option value="Completed">Completed</option>
-            <option value="Pending">Pending</option>
+            <option value="All">All Compliance States</option>
+            <option value="Completed">Completed Scans</option>
+            <option value="Pending">Pending Review</option>
           </select>
         </div>
-      </Card>
+      </div>
 
       {/* Logs Table */}
-      <Card className="overflow-hidden">
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.01]">
-                <th className="text-left py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Filename</th>
-                <th className="text-left py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Timeline</th>
-                <th className="text-center py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Entities</th>
-                <th className="text-left py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Risk Vector</th>
-                <th className="text-center py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Status</th>
-                <th className="text-right py-5 px-8 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-black">Action</th>
+              <tr className="border-b border-slate-50 bg-slate-50/30">
+                <th className="py-5 px-8 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Document Info</th>
+                <th className="py-5 px-8 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Timeline</th>
+                <th className="py-5 px-8 text-[10px] uppercase tracking-widest text-slate-400 font-bold">Process State</th>
+                <th className="py-5 px-8 text-[10px] uppercase tracking-widest text-slate-400 font-bold text-center">Security</th>
+                <th className="py-5 px-8 text-right text-[10px] uppercase tracking-widest text-slate-400 font-bold">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-50">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-4 opacity-30">
-                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
+                  <td colSpan="5" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
                          <HistoryIcon className="w-8 h-8" />
                       </div>
-                      <p className="text-sm font-black uppercase tracking-widest">No audit records found</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No audit telemetries found</p>
                     </div>
                   </td>
                 </tr>
               ) : logs.map((log) => (
                 <tr
                   key={log.id}
-                  className="group hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
                   onClick={() => navigate(`/scan-results?docId=${log.id}`)}
                 >
-                  <td className="py-5 px-8">
+                  <td className="py-4 px-8">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 flex items-center justify-center text-primary-400">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white group-hover:text-indigo-600 transition-all">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-200 uppercase tracking-tight group-hover:text-primary-400 transition-colors">{log.filename}</p>
-                        <p className="text-[10px] text-slate-600 font-bold uppercase">ID: LOG-{log.id}99X</p>
+                        <p className="text-sm font-bold text-slate-700 truncate max-w-[200px]">{log.filename}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">REFERENCE: {log.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-5 px-8">
+                  <td className="py-4 px-8">
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-300">{new Date(log.created_at || Date.now()).toLocaleDateString()}</p>
-                      <p className="text-[10px] text-slate-600 font-bold flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {new Date(log.created_at || Date.now()).toLocaleTimeString()}
+                      <p className="text-xs font-bold text-slate-600">{new Date(log.created_at).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
+                        <Clock className="w-3 h-3" /> {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </td>
-                  <td className="py-5 px-8 text-center text-sm font-black text-slate-400 font-mono">
-                    {log.status === 'redacted' ? 'Analysis Complete' : (log.status === 'scanned' ? 'Pending Mask' : 'In Progress')}
-                  </td>
-                  <td className="py-5 px-8">
-                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
-                       log.status === 'redacted' ? 'bg-success-500/10 text-success-400 border border-success-500/20' : 
-                       'bg-warning-500/10 text-warning-400 border border-warning-500/20'
-                     }`}>
-                       {log.status === 'redacted' ? 'SECURE' : 'ACTION NEEDED'}
-                     </span>
-                  </td>
-                  <td className="py-5 px-8 text-center">
-                    <span className="text-[10px] text-slate-400 font-black uppercase flex items-center justify-center gap-1.5">
+                  <td className="py-4 px-8">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight flex items-center gap-2">
                       <div className={`w-1.5 h-1.5 rounded-full ${
-                        log.status === 'redacted' ? 'bg-success-500' : 'bg-warning-500'
+                        log.status === 'redacted' ? 'bg-emerald-500' : 'bg-amber-500'
                       }`} />
                       {log.status}
                     </span>
                   </td>
-                  <td className="py-5 px-8 text-right">
+                  <td className="py-4 px-8 text-center">
+                     <span className={`text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${
+                       log.status === 'redacted' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                       'bg-amber-50 text-amber-700 border border-amber-100'
+                     }`}>
+                       {log.status === 'redacted' ? 'Secured' : 'Needs Review'}
+                     </span>
+                  </td>
+                  <td className="py-4 px-8 text-right">
                     <button 
                       onClick={(e) => handleDelete(log.id, e)}
-                      className="w-8 h-8 rounded-lg bg-slate-900 border border-white/5 flex items-center justify-center text-slate-600 hover:text-danger-500 hover:border-danger-500/20 hover:bg-danger-500/10 transition-all"
+                      className="w-8 h-8 rounded-lg border border-slate-100 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition-all flex items-center justify-center ml-auto"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -202,28 +199,24 @@ const History = () => {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
       
-      {/* Pagination Placeholder */}
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
-          Showing page {page} of {totalPages} ({totalCount} total results)
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between px-2">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          Displaying {logs.length} of {totalCount} records
         </p>
         <div className="flex gap-2">
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className={`px-4 py-2 ${page <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          <button 
+            className={`px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-30 disabled:pointer-events-none`}
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-          >Previous</Button>
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className={`px-4 py-2 ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >Previous</button>
+          <button 
+            className={`px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-30 disabled:pointer-events-none`}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-          >Next Page</Button>
+          >Next</button>
         </div>
       </div>
     </div>
