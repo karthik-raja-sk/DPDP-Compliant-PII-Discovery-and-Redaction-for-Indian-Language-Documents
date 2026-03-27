@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, CheckerRole
 from app.models.user import User, UserRole
 from app.core.database import get_db
+from app.core.config import settings
 from app.repositories.document_repository import doc_repo
 from app.repositories.pii_repository import pii_repo
 from app.services.pii_detection_service import pii_detection_service

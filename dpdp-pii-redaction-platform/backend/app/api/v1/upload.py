@@ -13,6 +13,9 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from app.services.audit_service import audit_service
+from app.core.database import get_db
+
+router = APIRouter()
 
 @router.post("/")
 async def upload_file(

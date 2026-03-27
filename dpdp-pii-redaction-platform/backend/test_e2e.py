@@ -3,7 +3,7 @@ import requests
 import time
 import json
 
-BASE_URL = "http://127.0.0.1:8002/api/v1"
+BASE_URL = "http://127.0.0.1:8000/api/v1"
 
 def run_tests():
     print("Testing Auth...")

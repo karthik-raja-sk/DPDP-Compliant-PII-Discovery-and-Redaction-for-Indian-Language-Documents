@@ -101,35 +101,41 @@ const Layout = ({ children }) => {
   );
 };
 
-const App = () => {
+const AppRoutes = () => {
   const { user } = useAuth();
 
   return (
+    <Router>
+      <Routes>
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Suspense fallback={<LoadingSpinner />}><Landing /></Suspense>} />
+        
+        <Route path="/login" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <Login />
+          </Suspense>
+        } />
+        <Route path="/register" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <Register />
+          </Suspense>
+        } />
+        
+        <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+        <Route path="/upload" element={<ProtectedRoute><Layout><Upload /></Layout></ProtectedRoute>} />
+        <Route path="/scan-results" element={<ProtectedRoute><Layout><ScanResult /></Layout></ProtectedRoute>} />
+        <Route path="/audit-logs" element={<ProtectedRoute><Layout><History /></Layout></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+};
+
+const App = () => {
+  return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Suspense fallback={<LoadingSpinner />}><Landing /></Suspense>} />
-          
-          <Route path="/login" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <Login />
-            </Suspense>
-          } />
-          <Route path="/register" element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <Register />
-            </Suspense>
-          } />
-          
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-          <Route path="/upload" element={<ProtectedRoute><Layout><Upload /></Layout></ProtectedRoute>} />
-          <Route path="/scan-results" element={<ProtectedRoute><Layout><ScanResult /></Layout></ProtectedRoute>} />
-          <Route path="/audit-logs" element={<ProtectedRoute><Layout><History /></Layout></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+      <AppRoutes />
     </AuthProvider>
   );
 };

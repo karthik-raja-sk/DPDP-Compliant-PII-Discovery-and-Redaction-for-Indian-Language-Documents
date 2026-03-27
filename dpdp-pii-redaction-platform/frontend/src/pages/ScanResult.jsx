@@ -84,6 +84,23 @@ const ScanResult = () => {
     }
   };
 
+  if (!docId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[600px] text-center px-4">
+        <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-6 shadow-inner">
+          <FileText className="w-10 h-10" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">No Document Selected</h2>
+        <p className="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
+          Please select a document from your dashboard or upload a new file to view its PII detection scan results and apply redactions.
+        </p>
+        <Button onClick={() => navigate('/upload')} className="shadow-lg shadow-indigo-100">
+          Go to Data Discovery <ArrowRight className="w-4 h-4 ml-2 inline" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in font-sans pb-10">
       {/* Dynamic Header */}
